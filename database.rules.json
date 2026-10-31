@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "analysis": {
+      ".read": true,
+      ".write": true,
+      "requests": {
+        ".indexOn": ["dueDate", "plannedDate", "reqNo"]
+      }
+    }
+  }
+}

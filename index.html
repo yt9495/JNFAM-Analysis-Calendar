@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<!--
+  JNFAM Analysis Task Calendar (분석 Task Calendar)
+  © 2025–2026 Young Tai Kang. All rights reserved. Unauthorized use, copying, modification, or distribution without the written permission of Young Tai Kang is prohibited.
+-->
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JNFAM Analysis Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f4f6fb;--white:#fff;--surface2:#f8f9fc;--border:#e4e8f0;--border2:#d0d7e8;
+  --accent:#7c3aed;--accent-d:#6d28d9;--accent-l:#f5f3ff;
+  --blue:#2563eb;--blue-l:#eff4ff;--green:#16a34a;--green-l:#f0fdf4;--yellow:#d97706;--yellow-l:#fffbeb;
+  --red:#dc2626;--red-l:#fef2f2;--cyan:#0891b2;
+  --text:#1e2533;--text2:#5a6478;--text3:#9aa3b5;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.06);
+  --shadow-lg:0 4px 20px rgba(0,0,0,.10),0 12px 40px rgba(0,0,0,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;display:flex;flex-direction:column;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+
+/* HEADER */
+.header{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(0,0,0,.06);}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;}
+.logo-text{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;}
+.logo-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.header-right{display:flex;align-items:center;gap:12px;}
+.sync-badge{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);font-size:12px;color:var(--text2);}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);}
+.sync-dot.connected{background:var(--green);}
+.sync-dot.syncing{background:var(--yellow);animation:blink .5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.today-chip{padding:5px 12px;border-radius:20px;background:var(--accent-l);border:1px solid #ddd6fe;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;}
+
+/* TABS */
+.tabs{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;display:flex;gap:2px;overflow-x:auto;}
+.tab{padding:13px 16px;border:none;background:transparent;color:var(--text3);font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+.tab:hover{color:var(--text2);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.main{padding:24px 28px;flex:1;}
+
+/* CONTROLS */
+.controls{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
+.controls-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.month-nav{display:flex;align-items:center;gap:10px;}
+.nav-btn{width:34px;height:34px;border-radius:8px;background:var(--white);border:1px solid var(--border);color:var(--text2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);}
+.nav-btn:hover{border-color:var(--accent);color:var(--accent);}
+.month-title{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;min-width:140px;}
+.seg{display:inline-flex;background:var(--white);border:1px solid var(--border);border-radius:8px;padding:3px;box-shadow:var(--shadow);}
+.seg button{border:none;background:transparent;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.seg button.on{background:var(--accent);color:#fff;}
+.stats-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.stat-chip{display:flex;align-items:center;gap:6px;background:var(--white);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;box-shadow:var(--shadow);}
+.stat-val{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;}
+.legend{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.legend .lg-title{font-size:11px;color:var(--text3);margin-right:2px;}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;color:var(--cc);background:var(--cb);border:1.5px solid transparent;cursor:pointer;user-select:none;white-space:nowrap;}
+.pill:hover{border-color:var(--cc);}
+.pill.on{border-color:var(--cc);box-shadow:0 0 0 2px var(--cb);}
+.pill.off{opacity:.35;}
+.pill .n{font-family:'IBM Plex Mono',monospace;font-weight:600;opacity:.8;}
+
+/* CALENDAR */
+.calendar{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);}
+.cal-header{display:grid;grid-template-columns:repeat(5,1fr) 0.55fr;background:var(--surface2);border-bottom:1px solid var(--border);}
+.cal-dow{padding:10px 0;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text3);border-right:1px solid var(--border);}
+.cal-dow:last-child{border-right:none;}
+.cal-grid{display:grid;grid-template-columns:repeat(5,1fr) 0.55fr;}
+.cal-day{min-height:150px;padding:8px 6px 4px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;overflow:hidden;}
+.cal-day:nth-child(6n){border-right:none;}
+.cal-day:hover{background:var(--accent-l);}
+.cal-day.other-month{background:var(--surface2);opacity:.5;}
+.cal-day.today{background:#f5f3ff;box-shadow:inset 0 0 0 2px var(--accent);}
+.cal-day.weekend-cell{background:var(--surface2);padding:6px 5px;}
+.cal-day.holiday{background:#fff1f2;}
+.cal-day.holiday .dn{color:var(--red);}
+.cal-day.holiday.ga-only{background:#fff7ed;}
+.cal-day.holiday.ga-only .dn{color:#c2410c;}
+.cal-day.holiday.us-only{background:#fdf2f8;}
+.day-num{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;gap:4px;}
+.dn{display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden;}
+.today-label{font-size:9px;background:var(--accent);color:#fff;border-radius:4px;padding:1px 5px;font-weight:700;}
+.hol-label{font-family:'Noto Sans KR',sans-serif;font-size:9.5px;font-weight:700;color:var(--red);background:#ffe4e6;border:1px solid #fecdd3;border-radius:4px;padding:0 5px;line-height:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hol-label.ga-only{color:#c2410c;background:#ffedd5;border-color:#fed7aa;}
+.hol-label.us-only{background:#fff;border-style:dashed;}
+.hb{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:700;color:#fff;border-radius:3px;padding:0 3px;margin-right:3px;line-height:12px;vertical-align:1px;}
+.hb.us{background:var(--red);}
+.hb.ga{background:#ea580c;}
+.hb.est{background:transparent;color:#ea580c;border:1px dashed #ea580c;line-height:10px;}
+.weekend-day-label{font-size:9px;font-weight:700;color:var(--text3);margin-bottom:3px;margin-top:6px;padding-top:4px;border-top:1px dashed var(--border);}
+.weekend-day-label:first-child{margin-top:0;border-top:none;padding-top:0;}
+.weekend-day-label.hol{color:var(--red);}
+.load{flex-shrink:0;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;border-radius:4px;padding:0 5px;line-height:15px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
+.load.mid{background:var(--yellow-l);color:var(--yellow);border-color:#fde68a;}
+.load.over{background:var(--red);color:#fff;border-color:var(--red);}
+
+.chip{display:flex;align-items:center;gap:3px;padding:3px 6px;border-radius:4px;font-size:10px;margin-bottom:2px;font-weight:600;white-space:nowrap;overflow:hidden;max-width:100%;color:var(--cc);background:var(--cb);border-left:3px solid var(--cc);}
+.chip.small{font-size:9px;padding:2px 4px;}
+.chip .tx{overflow:hidden;text-overflow:ellipsis;}
+.chip .tag{flex-shrink:0;font-size:9px;font-weight:800;border-radius:3px;padding:0 3px;line-height:13px;background:var(--cc);color:#fff;}
+.chip .st{flex-shrink:0;font-size:9px;font-weight:800;border-radius:3px;padding:0 3px;line-height:13px;}
+.st.late{background:var(--red);color:#fff;}
+.st.urg{background:#f97316;color:#fff;}
+.st.inprog{background:var(--blue);color:#fff;}
+.st.done{background:var(--green);color:#fff;}
+.st.hold{background:#94a3b8;color:#fff;}
+.chip.task{border-left-style:solid;background:#fff;border:1px solid var(--border);border-left:3px solid var(--cc);}
+.chip.virt{border-left-style:dashed;}
+.chip.is-done{opacity:.55;}
+.chip.is-done .tx{text-decoration:line-through;}
+.chip.is-late{box-shadow:inset 0 0 0 1px var(--red);}
+.chip .rp{flex-shrink:0;font-size:9px;opacity:.75;}
+.task-more{font-size:10px;color:var(--text3);padding:1px 6px;}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(30,37,51,.4);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.overlay.show{display:flex;}
+.modal{background:var(--white);border:1px solid var(--border);border-radius:16px;width:560px;max-width:95vw;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:slideUp .18s ease;}
+.modal.wide{width:880px;}
+@keyframes slideUp{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-header{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:10px;position:sticky;top:0;background:var(--white);z-index:2;}
+.modal-title{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;}
+.modal-sub{font-size:12px;color:var(--text2);margin-top:4px;font-family:'Noto Sans KR',sans-serif;}
+.modal-close{background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;padding:2px 8px;border-radius:6px;line-height:1;}
+.modal-close:hover{color:var(--red);background:var(--red-l);}
+.modal-body{padding:18px 22px;}
+.sec-h{font-size:12px;font-weight:800;color:var(--text2);margin:16px 0 8px;letter-spacing:.3px;}
+.sec-h:first-child{margin-top:0;}
+.card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;position:relative;}
+.card.req{border-left:4px solid var(--cc);cursor:pointer;}
+.card.req:hover{border-color:var(--cc);}
+.card.task{border-left:4px solid var(--cc);}
+.card-title{font-size:14px;font-weight:700;margin-bottom:6px;padding-right:50px;}
+.meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.meta-chip{font-size:10.5px;font-family:'IBM Plex Mono',monospace;padding:2px 8px;border-radius:4px;background:var(--white);border:1px solid var(--border);color:var(--text2);}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:4px;color:var(--cc);background:var(--cb);border:1px solid var(--cc);white-space:nowrap;}
+.icon-btn{position:absolute;top:9px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;padding:3px 7px;border-radius:5px;}
+.icon-btn.del{right:8px;}.icon-btn.edit{right:36px;font-size:13px;}
+.icon-btn.del:hover{color:var(--red);background:var(--red-l);}
+.icon-btn.edit:hover{color:var(--accent);background:var(--accent-l);}
+.kv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 16px;}
+.kv div{font-size:12.5px;min-width:0;}
+.kv .k{display:block;font-size:10.5px;color:var(--text3);font-weight:700;margin-bottom:1px;}
+.kv .v{word-break:break-word;}
+.stepper{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 2px;}
+.step{flex:1;min-width:80px;border:1.5px solid var(--border);background:var(--white);border-radius:8px;padding:7px 4px;font-size:11.5px;font-weight:700;color:var(--text3);cursor:pointer;text-align:center;font-family:'Noto Sans KR',sans-serif;}
+.step:hover{border-color:var(--cc);color:var(--cc);}
+.step.past{background:var(--cb);color:var(--cc);border-color:var(--cb);}
+.step.cur{background:var(--cc);color:#fff;border-color:var(--cc);}
+.step small{display:block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;opacity:.85;margin-top:2px;}
+
+/* TABLES */
+.tbl-wrap{overflow-x:auto;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);}
+table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.tbl th{background:var(--surface2);text-align:left;font-size:11px;font-weight:700;color:var(--text2);padding:9px 10px;border-bottom:1px solid var(--border);white-space:nowrap;}
+.tbl td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr.click{cursor:pointer;}
+.tbl tr.click:hover td{background:var(--accent-l);}
+.tbl td.num{text-align:right;font-family:'IBM Plex Mono',monospace;}
+.tbl .muted{color:var(--text3);}
+.tbl.mini{font-size:11.5px;}
+.tbl.mini td,.tbl.mini th{padding:6px 8px;}
+.dday{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;}
+.dday.late{color:var(--red)}.dday.soon{color:var(--yellow)}.dday.ok{color:var(--text3)}.dday.done{color:var(--green)}
+
+/* FORMS */
+.panel{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow);margin-bottom:18px;}
+.panel h3{font-size:15px;font-weight:800;margin-bottom:4px;}
+.panel .desc{font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 14px;}
+.grid3 .wide{grid-column:1/-1;}
+.grid3 .sec{grid-column:1/-1;font-size:12px;font-weight:800;color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:5px;margin-top:8px;}
+.form-label{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:4px;display:block;}
+.inp,.sel{width:100%;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-family:'Noto Sans KR',sans-serif;font-size:13px;outline:none;}
+.inp:focus,.sel:focus{border-color:var(--accent);background:var(--white);}
+.inp.warn{border-color:#f59e0b;background:#fffbeb;}
+.btn{background:var(--accent);color:#fff;font-weight:700;border:none;border-radius:8px;padding:9px 20px;font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;}
+.btn:hover{background:var(--accent-d);}
+.btn:disabled{background:var(--border2);color:var(--text3);cursor:not-allowed;}
+.btn.ghost{background:var(--white);color:var(--text2);border:1.5px solid var(--border);}
+.btn.ghost:hover{background:var(--surface2);}
+.btn.danger{background:var(--white);color:var(--red);border:1.5px solid #fecaca;}
+.btn.danger:hover{background:var(--red-l);}
+.btn.sm{padding:6px 12px;font-size:12px;}
+.btn-row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px;}
+.drop{border:2px dashed var(--border2);border-radius:12px;padding:26px;text-align:center;color:var(--text2);font-size:13px;cursor:pointer;background:var(--surface2);transition:all .15s;}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-l);color:var(--accent);}
+.drop b{color:var(--accent);}
+.msgs{margin-top:12px;display:flex;flex-direction:column;gap:5px;}
+.msg{font-size:12px;padding:7px 11px;border-radius:7px;line-height:1.5;}
+.msg.ok{background:var(--green-l);color:#166534;border:1px solid #bbf7d0;}
+.msg.warn{background:var(--yellow-l);color:#92400e;border:1px solid #fde68a;}
+.msg.err{background:var(--red-l);color:#991b1b;border:1px solid #fecaca;}
+.smp-tbl input,.smp-tbl select{width:100%;border:1px solid var(--border);border-radius:5px;padding:5px 6px;font-size:12px;font-family:'Noto Sans KR',sans-serif;background:var(--white);min-width:60px;}
+.smp-tbl input:focus{outline:none;border-color:var(--accent);}
+.smp-tbl td{padding:4px 5px;}
+.totals{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text2);margin-top:10px;}
+.totals b{font-family:'IBM Plex Mono',monospace;color:var(--text);}
+.filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.filter-row .sel,.filter-row .inp{width:auto;background:var(--white);box-shadow:var(--shadow);padding:7px 10px;font-size:12px;}
+.filter-row .sp{flex:1;}
+.dow-pick{display:flex;gap:5px;flex-wrap:wrap;}
+.dow-pick label{display:inline-flex;align-items:center;justify-content:center;width:38px;height:34px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text2);user-select:none;}
+.dow-pick input{display:none;}
+.dow-pick label:has(input:checked){background:var(--accent);border-color:var(--accent);color:#fff;}
+.preview{margin-top:10px;font-size:12px;color:var(--text2);background:var(--surface2);border:1px dashed var(--border2);border-radius:8px;padding:9px 12px;line-height:1.7;}
+.preview b{color:var(--accent);}
+.note{font-size:11.5px;color:var(--text3);line-height:1.7;}
+.pattern-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-l);border:1px solid #ddd6fe;border-radius:4px;padding:1px 6px;}
+tr.off td{opacity:.45;}
+
+.loading{display:flex;align-items:center;justify-content:center;padding:60px;gap:12px;color:var(--text3);font-size:13px;}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:700;transform:translateY(60px);opacity:0;transition:all .25s;z-index:999;max-width:90vw;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.error{background:var(--red);}
+.empty{text-align:center;padding:40px;color:var(--text3);font-size:13px;}
+.empty-icon{font-size:32px;margin-bottom:8px;}
+.footer{text-align:center;font-size:10.5px;color:var(--text3);padding:14px 20px 20px;line-height:1.6;}
+
+@media(max-width:768px){
+  .header{padding:0 14px;}.main{padding:14px;}.tabs{padding:0 14px;}
+  .logo-sub,.today-chip{display:none;}
+  .grid3,.kv{grid-template-columns:1fr 1fr;}
+  .cal-header,.cal-grid{grid-template-columns:repeat(5,1fr) 0.45fr;}
+  .cal-day{min-height:80px;padding:5px 3px;}
+}
+.lang-tg{display:inline-flex;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:2px;}
+.lang-tg button{border:none;background:transparent;padding:4px 11px;border-radius:16px;font-size:11.5px;font-weight:700;color:var(--text2);cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.lang-tg button.on{background:var(--accent);color:#fff;}
+.banner{display:none;background:var(--red-l);color:#991b1b;border-bottom:1px solid #fecaca;padding:10px 28px;font-size:13px;line-height:1.6;}
+.banner.show{display:block;}
+.banner code{background:#fff;border:1px solid #fecaca;border-radius:4px;padding:0 5px;font-family:'IBM Plex Mono',monospace;font-size:12px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-mark">AN</div>
+    <div>
+      <div class="logo-text">JNFAM ANALYSIS CALENDAR</div>
+      <div class="logo-sub" data-i18n="app.sub"></div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="lang-tg" id="langTg"><button data-l="ko" onclick="setLang('ko')">한국어</button><button data-l="en" onclick="setLang('en')">EN</button></div>
+    <div class="sync-badge"><div class="sync-dot" id="syncDot"></div><span id="syncText"></span></div>
+    <div class="today-chip" id="todayBadge"></div>
+  </div>
+</div>
+<div class="banner" id="banner"></div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="calendar" onclick="switchTab('calendar')" data-i18n="tab.calendar"></button>
+  <button class="tab" data-tab="list" onclick="switchTab('list')" data-i18n="tab.list"></button>
+  <button class="tab" data-tab="register" onclick="switchTab('register')" data-i18n="tab.register"></button>
+  <button class="tab" data-tab="pattern" onclick="switchTab('pattern')" data-i18n="tab.pattern"></button>
+  <button class="tab" data-tab="settings" onclick="switchTab('settings')" data-i18n="tab.settings"></button>
+</div>
+
+<div class="main">
+
+  <!-- ═════ CALENDAR ═════ -->
+  <div id="tab-calendar">
+    <div class="controls">
+      <div class="controls-top">
+        <div class="month-nav">
+          <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+          <div class="month-title" id="monthTitle"></div>
+          <button class="nav-btn" onclick="changeMonth(1)">›</button>
+          <button class="btn ghost sm" onclick="goToday()" data-i18n="cal.today"></button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span class="note" data-i18n="cal.base"></span>
+          <div class="seg" id="baseSeg">
+            <button data-b="due" onclick="setBase('due')" data-i18n="cal.baseDue"></button>
+            <button data-b="plan" onclick="setBase('plan')" data-i18n="cal.basePlan"></button>
+          </div>
+        </div>
+      </div>
+      <div class="stats-row" id="statsRow"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="calendar">
+      <div class="cal-header" id="calHeader"></div>
+      <div class="cal-grid" id="calGrid"><div class="loading" style="grid-column:1/-1"><div class="spinner"></div><span data-i18n="common.loading"></span></div></div>
+    </div>
+    <div class="note" style="margin-top:8px" data-i18n-html="cal.loadNote"></div>
+  </div>
+
+  <!-- ═════ LIST ═════ -->
+  <div id="tab-list" style="display:none">
+    <div class="filter-row">
+      <input class="inp" id="fText" data-i18n-ph="list.search" oninput="renderList()" style="min-width:240px">
+      <select class="sel" id="fStage" onchange="renderList()"></select>
+      <select class="sel" id="fCompany" onchange="renderList()"></select>
+      <select class="sel" id="fPeriod" onchange="renderList()">
+        <option value="open" data-i18n="list.pOpen"></option>
+        <option value="month" data-i18n="list.pMonth"></option>
+        <option value="last30" data-i18n="list.p30"></option>
+        <option value="all" data-i18n="list.pAll"></option>
+      </select>
+      <span class="sp"></span>
+      <button class="btn ghost sm" onclick="downloadCSV()">⬇ CSV</button>
+    </div>
+    <div class="stats-row" id="listStats" style="margin-bottom:12px"></div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr>
+          <th data-i18n="f.reqNo"></th><th data-i18n="f.dept"></th><th data-i18n="list.mat"></th><th class="num" data-i18n="st.smp"></th><th data-i18n="s.items"></th>
+          <th data-i18n="list.rec"></th><th data-i18n="list.plan"></th><th data-i18n="list.due"></th><th>D-DAY</th><th data-i18n="f.stage"></th><th data-i18n="list.analyst"></th><th class="num">TAT</th>
+        </tr></thead>
+        <tbody id="listBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═════ REGISTER ═════ -->
+  <div id="tab-register" style="display:none">
+    <div class="panel">
+      <h3 data-i18n="imp.title"></h3>
+      <p class="desc" data-i18n-html="imp.desc"></p>
+      <div class="drop" id="dropZone" onclick="document.getElementById('fileInput').click()" data-i18n-html="imp.drop"></div>
+      <input type="file" id="fileInput" accept=".xlsx,.xlsm,.xls" style="display:none" onchange="onFile(this.files[0]);this.value=''">
+      <div class="msgs" id="parseMsgs"></div>
+    </div>
+
+    <div class="panel">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <h3 id="edTitle"></h3>
+        <span class="note" id="edSource"></span>
+        <span style="flex:1"></span>
+        <button class="btn ghost sm" onclick="resetEditor()" data-i18n="ed.new"></button>
+      </div>
+      <p class="desc" data-i18n="ed.desc"></p>
+      <div class="grid3" id="edGrid"></div>
+
+      <div class="sec-h" style="margin-top:20px;color:var(--accent)" data-i18n="sec.smp"></div>
+      <div class="tbl-wrap" style="box-shadow:none">
+        <table class="tbl mini smp-tbl">
+          <thead><tr><th>#</th><th><span data-i18n="s.id"></span> *</th><th data-i18n="s.mat"></th><th data-i18n="s.lot"></th><th data-i18n="s.cont"></th><th data-i18n="s.vol"></th><th data-i18n="s.qty"></th><th data-i18n="s.sdate"></th><th data-i18n="s.items"></th><th data-i18n="s.pre"></th><th data-i18n="s.rmk"></th><th></th></tr></thead>
+          <tbody id="smpBody"></tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div class="totals" id="smpTotals"></div>
+        <button class="btn ghost sm" onclick="addSampleRow()" style="margin-top:10px" data-i18n="ed.addRow"></button>
+      </div>
+      <datalist id="dlMat"><option>HF</option><option>HCl</option><option>HNO3</option><option>KOH</option><option>Polysilicon (Surface)</option><option>Polysilicon (Bulk)</option><option>UPW</option><option>Wafer</option><option>Other</option></datalist>
+      <datalist id="dlCont"><option>Bottle</option><option>PFA Bottle</option><option>Vinyl bag</option><option>Glass Bottle</option><option>Vial</option><option>Other</option></datalist>
+      <datalist id="dlItems"><option>ICP-MS</option></datalist>
+      <datalist id="dlAnalyst"></datalist>
+      <datalist id="dlInst"></datalist>
+      <datalist id="dlCompany"></datalist>
+
+      <div class="btn-row">
+        <button class="btn ghost" onclick="resetEditor()" data-i18n="btn.cancel"></button>
+        <button class="btn" id="edSaveBtn" onclick="saveRequest()"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════ PATTERN ═════ -->
+  <div id="tab-pattern" style="display:none">
+    <div class="panel" style="padding:0;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+        <h3 style="margin:0" data-i18n="pt.title"></h3>
+        <span class="note" data-i18n="pt.sub"></span>
+        <span style="flex:1"></span>
+        <button class="btn sm" onclick="openPatternForm()" data-i18n="pt.add"></button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr><th style="width:46px" data-i18n="pt.use"></th><th data-i18n="pt.work"></th><th data-i18n="tk.cat"></th><th data-i18n="pt.cycle"></th><th data-i18n="tk.worker"></th><th data-i18n="pt.period"></th><th data-i18n="pt.next"></th><th></th></tr></thead>
+          <tbody id="patternBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="note" style="padding:0 4px" data-i18n-html="pt.notes"></div>
+  </div>
+
+  <!-- ═════ SETTINGS ═════ -->
+  <div id="tab-settings" style="display:none">
+    <div class="panel" style="max-width:640px">
+      <h3 data-i18n="set.title"></h3>
+      <p class="desc" data-i18n="set.desc"></p>
+      <div class="grid3" style="grid-template-columns:1fr 1fr">
+        <div><label class="form-label" data-i18n="set.cap"></label><input class="inp" type="number" min="1" id="setCap"></div>
+        <div><label class="form-label" data-i18n="set.tat"></label><input class="inp" type="number" min="0" id="setTat" data-i18n-ph="set.tatPh"></div>
+        <div class="wide"><label class="form-label" data-i18n="set.analysts"></label><input class="inp" id="setAnalysts" data-i18n-ph="set.analystsPh"></div>
+        <div class="wide"><label class="form-label" data-i18n="set.inst"></label><input class="inp" id="setInst" placeholder="ICP-MS"></div>
+      </div>
+      <div class="btn-row"><button class="btn" onclick="saveSettings()" data-i18n="set.save"></button></div>
+      <div class="note" style="margin-top:14px" id="dbInfo"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">© 2025–2026 Young Tai Kang. All rights reserved. Unauthorized use, copying, modification, or distribution without the written permission of Young Tai Kang is prohibited.</div>
+
+<!-- DAY MODAL -->
+<div class="overlay" id="dayOverlay" onclick="if(event.target===this)closeOv('dayOverlay')">
+  <div class="modal">
+    <div class="modal-header"><div><div class="modal-title" id="dayTitle"></div><div class="modal-sub" id="daySub"></div></div>
+      <button class="modal-close" onclick="closeOv('dayOverlay')">×</button></div>
+    <div class="modal-body" id="dayBody"></div>
+  </div>
+</div>
+
+<!-- REQUEST DETAIL MODAL -->
+<div class="overlay" id="reqOverlay" onclick="if(event.target===this)closeOv('reqOverlay')">
+  <div class="modal wide">
+    <div class="modal-header"><div><div class="modal-title" id="reqTitle"></div><div class="modal-sub" id="reqSub"></div></div>
+      <button class="modal-close" onclick="closeOv('reqOverlay')">×</button></div>
+    <div class="modal-body" id="reqBody"></div>
+  </div>
+</div>
+
+<!-- TASK MODAL -->
+<div class="overlay" id="taskOverlay" onclick="if(event.target===this)closeOv('taskOverlay')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="taskFormTitle"></div>
+      <button class="modal-close" onclick="closeOv('taskOverlay')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="tk-key">
+      <div class="grid3" style="grid-template-columns:1fr 1fr">
+        <div class="wide"><label class="form-label" data-i18n="tk.text"></label><input class="inp" id="tk-text" data-i18n-ph="tk.textPh"></div>
+        <div><label class="form-label" data-i18n="tk.date"></label><input class="inp" type="date" id="tk-date"></div>
+        <div><label class="form-label" data-i18n="tk.cat"></label><select class="sel" id="tk-cat"></select></div>
+        <div><label class="form-label" data-i18n="tk.worker"></label><input class="inp" id="tk-worker" list="dlAnalyst"></div>
+        <div><label class="form-label" data-i18n="tk.status"></label><select class="sel" id="tk-status"></select></div>
+      </div>
+      <div class="btn-row"><button class="btn ghost" onclick="closeOv('taskOverlay')" data-i18n="btn.cancel"></button><button class="btn" onclick="saveTask()" data-i18n="btn.save"></button></div>
+    </div>
+  </div>
+</div>
+
+<!-- PATTERN MODAL -->
+<div class="overlay" id="patternOverlay" onclick="if(event.target===this)closeOv('patternOverlay')">
+  <div class="modal" style="width:620px">
+    <div class="modal-header"><div class="modal-title" id="ptFormTitle"></div>
+      <button class="modal-close" onclick="closeOv('patternOverlay')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="pt-id">
+      <div class="grid3" style="grid-template-columns:1fr 1fr">
+        <div class="wide"><label class="form-label" data-i18n="tk.text"></label><input class="inp" id="pt-text" data-i18n-ph="pt.textPh" oninput="ptPreview()"></div>
+        <div><label class="form-label" data-i18n="tk.cat"></label><select class="sel" id="pt-cat"></select></div>
+        <div><label class="form-label" data-i18n="tk.worker"></label><input class="inp" id="pt-worker" list="dlAnalyst"></div>
+        <div><label class="form-label" data-i18n="pt.freq"></label>
+          <select class="sel" id="pt-freq" onchange="ptFreqUI();ptPreview()"><option value="weekly" data-i18n="pt.weekly"></option><option value="monthly" data-i18n="pt.monthly"></option></select></div>
+        <div><label class="form-label" data-i18n="pt.interval"></label><select class="sel" id="pt-interval" onchange="ptPreview()"></select></div>
+        <div class="wide" id="pt-weekly-row"><label class="form-label" data-i18n="pt.dow"></label><div class="dow-pick" id="pt-days"></div></div>
+        <div class="wide" id="pt-monthly-row" style="display:none"><label class="form-label" data-i18n="pt.mday"></label><select class="sel" id="pt-mday" onchange="ptPreview()"></select></div>
+        <div><label class="form-label" data-i18n="pt.start"></label><input class="inp" type="date" id="pt-start" onchange="ptPreview()"></div>
+        <div><label class="form-label" data-i18n="pt.end"></label><input class="inp" type="date" id="pt-end" onchange="ptPreview()"></div>
+        <div class="wide"><label class="form-label" data-i18n="f.memo"></label><input class="inp" id="pt-memo"></div>
+      </div>
+      <div class="preview" id="pt-preview"></div>
+      <div class="btn-row"><button class="btn ghost" onclick="closeOv('patternOverlay')" data-i18n="btn.cancel"></button><button class="btn" id="ptSaveBtn" onclick="savePattern()" data-i18n="btn.save"></button></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+/* © 2025–2026 Young Tai Kang. All rights reserved. Unauthorized use, copying, modification, or distribution without the written permission of Young Tai Kang is prohibited. */
+
+/* ═════════════ 언어 (한/영) ═════════════
+   화면 문구만 바뀌고, 저장되는 값(단계·종류·상태)은 한글 키 그대로 → 언어를 바꿔도 데이터는 같음 */
+const I18N = {
+  'app.sub':['분석 의뢰 · 일정 · 장비 부하 · 실시간 동기화','Analysis requests · schedule · instrument load · live sync'],
+  'sync.on':['실시간 동기화 중','Live sync'],'sync.saving':['저장 중...','Saving...'],'sync.off':['연결 끊김','Disconnected'],'sync.wait':['연결 중...','Connecting...'],
+  'tab.calendar':['📅 달력','📅 Calendar'],'tab.list':['📋 의뢰 목록','📋 Requests'],'tab.register':['📥 의뢰 등록','📥 New Request'],'tab.pattern':['🔁 정기 업무','🔁 Routine Work'],'tab.settings':['⚙ 설정','⚙ Settings'],
+  'common.loading':['데이터 로딩 중...','Loading...'],
+  'cal.today':['오늘','Today'],'cal.base':['의뢰 표시 기준','Show requests on'],'cal.baseDue':['결과 약속일','Due date'],'cal.basePlan':['측정 예정일','Planned run'],'cal.weekend':['주말','WKND'],
+  'cal.loadNote':['날짜 옆 <span class="load">🧪 n/용량</span> = 그날 <b>측정 예정</b>인 미완료 샘플 수 / 하루 처리 용량(⚙ 설정). 용량 80% 이상 노랑, 초과 빨강.','<span class="load">🧪 n/cap</span> next to a date = open samples <b>planned to run</b> that day / daily capacity (⚙ Settings). Yellow at 80%+, red when over.'],
+  'st.req':['의뢰','Requests'],'st.smp':['샘플','Samples'],'st.open':['진행','Open'],'st.late':['지연','Overdue'],'st.sent':['발송 완료','Sent'],'st.ontime':['약속일 준수율','On-time rate'],'st.allOpen':['전체 미완료','All open'],'st.avgTat':['평균 TAT','Avg TAT'],'st.lateOpen':['지연(미완료)','Overdue (open)'],
+  'lg.stage':['단계 (클릭해서 필터)','Stage (click to filter)'],'lg.tasksOn':['↻ 정기·일반 업무 표시','↻ Work items: shown'],'lg.tasksOff':['↻ 정기·일반 업무 숨김','↻ Work items: hidden'],'lg.all':['✕ 전체 단계','✕ All stages'],
+  'mk.urg':['긴급','URG'],'mk.late':['지연','LATE'],'mk.wip':['진행','WIP'],'mk.hold':['보류','HOLD'],'mk.lateDays':['{0}일 지연','{0}d late'],
+  'more':['+{0}개 더','+{0} more'],'load.tip':['측정 예정 미완료 샘플 {0} / 하루 용량 {1}','Open samples planned: {0} / daily capacity {1}'],
+  'day.planned':['측정 예정 미완료 샘플','Open samples planned'],'day.cap':['용량','capacity'],'day.due':['📌 결과 약속일인 의뢰','📌 Due this day'],'day.plan':['🧪 측정 예정 의뢰','🧪 Planned to run this day'],
+  'day.work':['🔧 업무','🔧 Work items'],'day.noWork':['업무 없음','No work items'],'day.addReq':['+ 이 날짜 약속일로 의뢰 등록','+ New request due this day'],'day.addTask':['+ 업무 추가','+ Add work item'],
+  'meta.due':['약속','Due'],'meta.run':['측정','Run'],'tag.routine':['↻ 정기','↻ Routine'],'tag.saved':['(저장됨)','(saved)'],'noNo':['(번호 없음)','(no number)'],
+  'tk.add':['업무 추가','Add work item'],'tk.edit':['업무 수정','Edit work item'],'tk.text':['업무 내용 *','Work item *'],'tk.textPh':['예: ICP-MS 튜닝 / 표준용액 조제','e.g. ICP-MS tuning / standard prep'],
+  'tk.date':['날짜 *','Date *'],'tk.cat':['종류','Type'],'tk.worker':['담당자','Assignee'],'tk.status':['상태','Status'],
+  'btn.cancel':['취소','Cancel'],'btn.save':['저장','Save'],'btn.edit':['수정','Edit'],'btn.del':['삭제','Delete'],
+  'sec.stage':['진행 단계 (클릭해서 변경)','Progress (click to change)'],'sec.jnfam':['JNFAM 처리 (내부)','JNFAM handling (internal)'],'sec.req':['1. 의뢰 정보','1. Request information'],
+  'sec.dept':['2. 요청 부서 → 처리 구매팀','2. Requesting dept → Purchasing team'],'sec.smp':['3. 샘플 정보','3. Sample information'],'sec.trans':['5. 운반 옵션','5. Transport options'],
+  'smp.sum':['3. 샘플 ({0}건 · 용기 {1}ea · 전처리 {2}건)','3. Samples ({0} · {1} containers · {2} pre-treat)'],'smp.none':['샘플 없음','No samples'],
+  'src.import':['의뢰서 가져오기','Imported form'],'src.manual':['직접 입력','Manual entry'],'ot.y':['준수','On time'],'ot.n':['지연','Late'],'days':['{0}일','{0}d'],'dd.done':['완료','Done'],
+  'req.del':['🗑 의뢰 삭제','🗑 Delete request'],'req.edit':['✏️ 전체 수정','✏️ Edit all'],
+  'list.search':['🔍 의뢰번호·회사·시료·Lot 검색','🔍 Search no. · company · sample · lot'],'list.allStages':['전체 단계','All stages'],'list.allCo':['전체 회사','All companies'],
+  'list.pOpen':['미완료 전체','All open'],'list.pMonth':['이번 달 약속일','Due this month'],'list.p30':['최근 30일 접수','Received last 30 days'],'list.pAll':['전체','All'],
+  'list.mat':['시료','Material'],'list.rec':['접수일','Received'],'list.plan':['측정 예정','Planned'],'list.due':['약속일','Due'],'list.analyst':['담당','Analyst'],'list.empty':['조건에 맞는 의뢰가 없습니다','No matching requests'],'list.sentLate':['발송(지연)','Sent (late)'],
+  'imp.title':['📥 고객 분석 의뢰서 가져오기','📥 Import customer analysis request form'],
+  'imp.desc':['고객이 보낸 <b>JNFAM Analysis Request Form (.xlsx)</b>을 끌어다 놓거나 클릭해서 선택하세요. 내용을 읽어 아래 등록 양식에 채워 넣습니다. 확인·수정 후 저장하면 달력에 들어갑니다.','Drop or select the <b>JNFAM Analysis Request Form (.xlsx)</b> sent by the customer. Its contents fill the form below — review, adjust and save to put it on the calendar.'],
+  'imp.drop':['📄 의뢰서 파일을 여기로 끌어다 놓기 · 또는 <b>클릭해서 선택</b><br><span class="note">.xlsx / .xlsm · 한 번에 1개</span>','📄 Drop the request form here · or <b>click to choose</b><br><span class="note">.xlsx / .xlsm · one file at a time</span>'],
+  'imp.reading':['⏳ {0} 읽는 중...','⏳ Reading {0}...'],'imp.noLib':['엑셀 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인하세요.','Could not load the Excel library. Check the internet connection.'],
+  'imp.ok':['✅ <b>{0}</b> — 샘플 {1}건, {2}, 결과 요청일 {3}. 아래 내용을 확인하고 <b>접수일·측정 예정일·담당자</b>를 채운 뒤 저장하세요.','✅ <b>{0}</b> — {1} samples, {2}, due {3}. Review below, fill in <b>received date · planned run · analyst</b>, then save.'],
+  'imp.noDeptShort':['부서 미지정','no department'],'imp.none':['없음','none'],'imp.dupReq':['이미 등록된 의뢰와 겹칩니다: {0} ({1}, 의뢰일 {2})','Overlaps an existing request: {0} ({1}, requested {2})'],
+  'w.deptMissing':['요청 부서 "{0}"가 Dept Master에 없습니다 — 부서·구매팀을 직접 입력하세요','Department "{0}" is not in Dept Master — enter department and purchasing team manually'],
+  'w.noDept':['요청 부서가 선택되지 않았습니다','No requesting department selected'],'w.noId':['샘플 {0}행: Sample ID가 비어 있습니다','Sample row {0}: Sample ID is empty'],
+  'w.noItems':['샘플 {0}: 분석 항목이 비어 있습니다','Sample {0}: analysis items are empty'],'w.noSamples':['샘플 정보가 없습니다 (예시 EX 행은 제외됨)','No sample rows (the EX example row is skipped)'],
+  'w.noDue':['결과 요청일(Requested Due Date)이 비어 있습니다','Requested Due Date is empty'],'w.dueBeforeReq':['결과 요청일이 의뢰 요청일보다 빠릅니다','Due date is earlier than the request date'],
+  'w.dupIds':['중복된 Sample ID: {0}','Duplicate Sample IDs: {0}'],
+  'e.NOT_FORM':['JNFAM 분석 의뢰서 양식을 찾지 못했습니다 (Request Date / Sample ID 라벨 없음)','Not a JNFAM analysis request form (no Request Date / Sample ID labels)'],'e.EMPTY':['시트가 비어 있습니다','The sheet is empty'],
+  'ed.new':['새로 작성','New'],'ed.desc':['의뢰서 없이 전화·메일로 받은 의뢰도 여기서 직접 입력할 수 있습니다. * 표시는 필수.','Requests received by phone or e-mail can be entered here directly. * = required.'],
+  'ed.titleNew':['➕ 의뢰 등록','➕ New request'],'ed.titleImp':['➕ 의뢰 등록 (의뢰서에서 읽음)','➕ New request (from form)'],'ed.titleEdit':['✏️ 의뢰 수정 — {0}','✏️ Edit request — {0}'],
+  'ed.save':['💾 의뢰 저장','💾 Save request'],'ed.saveEdit':['💾 수정 저장','💾 Save changes'],'ed.addRow':['+ 샘플 행 추가','+ Add sample row'],'ed.reqNoPh':['비우면 자동 (AN-YYMM-###)','Blank = auto (AN-YYMM-###)'],
+  'ed.totals':['총 샘플 <b>{0}</b> · 총 용기 <b>{1}</b>ea · 전처리 대상 <b>{2}</b> · 총 용량 <b>{3}</b> mL','Samples <b>{0}</b> · containers <b>{1}</b> · pre-treat <b>{2}</b> · total volume <b>{3}</b> mL'],
+  'ed.delRow':['행 삭제','Remove row'],
+  'f.reqNo':['의뢰번호','Request No.'],'f.reqDate':['의뢰 요청일','Request date'],'f.dueDate':['결과 요청일 (약속일)','Due date (committed)'],'f.priority':['긴급도','Priority'],
+  'f.site':['사업장','Site'],'f.requester':['의뢰자','Requester'],'f.email':['E-mail','E-mail'],'f.phone':['연락처','Phone'],'f.po':['고객 PO / 참조번호','Customer PO / Ref No.'],
+  'f.company':['회사','Company'],'f.division':['공정','Division'],'f.dept':['요청 부서','Department'],'f.purTeam':['처리 구매팀','Purchasing team'],'f.purContact':['구매 담당자','Purchasing contact'],'f.purEmail':['구매 이메일','Purchasing e-mail'],
+  'f.delivery':['운반 방법','Delivery method'],'f.shipDate':['수거·발송 예정일','Pickup / ship date'],'f.storage':['보관 조건','Storage condition'],'f.tracking':['운송장 번호','Tracking No.'],'f.hazmat':['위험물 정보','Hazmat info'],'f.after':['분석 후 샘플 처리','After analysis'],'f.address':['수거 주소','Pickup address'],
+  'f.receivedDate':['접수일 (샘플 도착)','Received date (samples in)'],'f.plannedDate':['측정 예정일','Planned run date'],'f.stage':['단계','Stage'],'f.analyst':['담당 분석자','Analyst'],'f.instrument':['장비','Instrument'],
+  'f.receivedBy':['접수자','Received by'],'f.receivedCond':['접수 시 샘플 상태','Sample condition on receipt'],'f.memo':['메모','Memo'],'f.completedDate':['결과 발송일','Result sent'],'f.tat':['TAT (접수→발송)','TAT (receipt → sent)'],'f.ontime':['약속일 준수','On time'],'f.source':['등록','Source'],
+  's.id':['Sample ID','Sample ID'],'s.mat':['물질','Material'],'s.lot':['Lot No.','Lot No.'],'s.cont':['용기','Container'],'s.vol':['Volume(mL)','Volume(mL)'],'s.qty':['Qty(ea)','Qty(ea)'],'s.sdate':['채취일','Sampled'],'s.items':['분석 항목','Analysis items'],'s.pre':['전처리','Pre-treat'],'s.rmk':['비고','Remarks'],
+  'pt.title':['🔁 정기 분석 업무','🔁 Routine analysis work'],'pt.sub':['UPW 정기 측정, ICP-MS 점검, 교정·QC 등 반복 업무를 한 번 등록하면 달력에 자동 표시','Register recurring work once (UPW checks, ICP-MS maintenance, calibration/QC) and it appears on the calendar'],
+  'pt.add':['+ 정기 업무 추가','+ Add routine work'],'pt.addT':['정기 업무 추가','Add routine work'],'pt.editT':['정기 업무 수정','Edit routine work'],'pt.use':['사용','On'],'pt.work':['업무','Work'],'pt.cycle':['주기','Cycle'],'pt.period':['적용 기간','Period'],'pt.next':['다음 일정','Next'],
+  'pt.ongoing':['계속','ongoing'],'pt.empty':['등록된 정기 업무가 없습니다','No routine work yet'],'pt.textPh':['예: UPW 정기 측정 / ICP-MS 월간 점검','e.g. UPW routine check / ICP-MS monthly PM'],
+  'pt.freq':['반복 단위 *','Repeat *'],'pt.weekly':['주 단위 (요일 지정)','Weekly (pick weekdays)'],'pt.monthly':['월 단위 (날짜 지정)','Monthly (pick a date)'],'pt.interval':['간격','Interval'],
+  'pt.dow':['요일 * (여러 개 가능)','Weekdays * (multiple)'],'pt.mday':['날짜 *','Day of month *'],'pt.start':['시작일 *','Start *'],'pt.end':['종료일 (비우면 계속)','End (blank = ongoing)'],
+  'pt.every':['매주','Every week'],'pt.everyM':['매월','Every month'],'pt.nW':['{0}주마다','Every {0} weeks'],'pt.nM':['{0}개월마다','Every {0} months'],'pt.last':['말일','last day'],'pt.dayN':['{0}일','day {0}'],
+  'pt.cycW':['매주 {0}','Weekly {0}'],'pt.cycWn':['{0}주마다 {1}','Every {0} wks {1}'],'pt.cycM':['매월 {0}','Monthly, {0}'],'pt.cycMn':['{0}개월마다 {1}','Every {0} mos, {1}'],
+  'pt.pvHint':['요일(또는 날짜)과 시작일을 정하면 다음 일정이 미리 보입니다.','Choose weekdays (or a date) and a start date to preview.'],'pt.pvNext':['다음 일정','Next'],'pt.pvNone':['없음','none'],
+  'pt.notes':['· 정기 업무는 미리 저장하지 않고 화면에서 계산해 보여줍니다(점선 + ↻). 패턴을 고치면 앞으로의 일정이 모두 바로 바뀝니다.<br>· 개별 일정의 상태를 바꾸거나 수정하면 그 1건만 실제 업무로 저장되고, 이후 패턴을 고쳐도 그 1건은 그대로 남습니다.<br>· 개별 일정을 삭제하면 그 날짜만 건너뜁니다. 휴일에 걸려도 날짜는 그대로 둡니다(달력에 휴일 표시만).',
+              '· Routine items are computed on screen, not stored (dashed + ↻). Editing the pattern updates all future dates at once.<br>· Changing the status of, or editing, a single occurrence saves just that one as a real item; later pattern edits leave it unchanged.<br>· Deleting a single occurrence skips that date only. Holidays do not move dates (they are only marked).'],
+  'set.title':['⚙ 설정','⚙ Settings'],'set.desc':['모든 사용자에게 공통 적용됩니다.','Applies to all users.'],'set.cap':['하루 측정 용량 (샘플 수)','Daily run capacity (samples)'],
+  'set.tat':['결과 약속일 기본값 (접수일 + 영업일)','Default due date (received + business days)'],'set.tatPh':['의뢰서에 결과 요청일이 없을 때','Used when the form has no due date'],
+  'set.analysts':['담당 분석자 (쉼표로 구분)','Analysts (comma-separated)'],'set.analystsPh':['예: 홍길동, Kim','e.g. Hong, Kim'],'set.inst':['장비 (쉼표로 구분)','Instruments (comma-separated)'],'set.save':['설정 저장','Save settings'],
+  'set.db':['데이터 저장 위치: Firebase <code>{0}</code> 프로젝트의 <code>/{1}/</code> 경로 (requests · tasks · patterns · settings)','Data location: Firebase project <code>{0}</code>, path <code>/{1}/</code> (requests · tasks · patterns · settings)'],
+  't.saveFail':['저장 실패: {0} (Firebase 규칙에 {1} 경로 허용 필요)','Save failed: {0} (Firebase rules must allow the {1} path)'],
+  't.readFail':['{0} 읽기 오류: {1} (Firebase 규칙에 {2} 경로 허용 필요)','Read error ({0}): {1} (Firebase rules must allow the {2} path)'],
+  'r.requests':['의뢰','requests'],'r.tasks':['업무','work items'],'r.patterns':['정기 업무','routine work'],'r.settings':['설정','settings'],
+  't.taskReq':['업무 내용과 날짜를 입력하세요','Enter the work item and date'],'t.taskAdded':['✅ 업무 추가됨','✅ Work item added'],'t.taskEdited':['✅ 업무 수정됨','✅ Work item updated'],'t.status':['✓ 상태 변경됨','✓ Status updated'],'t.deleted':['🗑 삭제됨','🗑 Deleted'],
+  'c.delPat1':['이 날짜의 정기 업무만 삭제(건너뛰기)할까요?\n패턴 전체는 [🔁 정기 업무] 탭에서 삭제하세요.','Skip this routine item on this date only?\nDelete the whole pattern in the [🔁 Routine Work] tab.'],'c.delTask':['이 업무를 삭제할까요?','Delete this work item?'],
+  'c.delReq':['의뢰 {0} ({1})을(를) 삭제할까요?\n되돌릴 수 없습니다.','Delete request {0} ({1})?\nThis cannot be undone.'],'t.reqDeleted':['🗑 의뢰 삭제됨','🗑 Request deleted'],
+  't.needDue':['결과 요청일(약속일)을 입력하세요','Enter the due date'],'t.needId':['Sample ID가 비어 있는 행이 있습니다','A sample row has no Sample ID'],'c.noSamples':['샘플이 0건입니다. 그래도 저장할까요?','There are no samples. Save anyway?'],
+  'c.dup':['이미 비슷한 의뢰가 있습니다: {0} ({1}, 의뢰일 {2}).\n그래도 저장할까요?','A similar request exists: {0} ({1}, requested {2}).\nSave anyway?'],'t.reqSaved':['✅ {0} 등록됨','✅ {0} saved'],'t.reqEdited':['✅ {0} 수정됨','✅ {0} updated'],
+  't.ptText':['업무 내용을 입력하세요','Enter the work item'],'t.ptStart':['시작일을 입력하세요','Enter the start date'],'t.ptDow':['요일을 하나 이상 선택하세요','Pick at least one weekday'],'t.ptEnd':['종료일이 시작일보다 빠릅니다','End date is before the start date'],
+  't.ptAdded':['✅ 정기 업무 추가됨','✅ Routine work added'],'t.ptEdited':['✅ 정기 업무 수정됨','✅ Routine work updated'],'t.ptOn':['▶ 사용','▶ Enabled'],'t.ptOff':['⏸ 중지','⏸ Paused'],
+  'c.delPt':['정기 업무 "{0}"을(를) 삭제할까요?\n앞으로의 자동 일정이 사라집니다. (이미 저장된 업무는 남습니다)','Delete routine work "{0}"?\nFuture auto items disappear (already saved items remain).'],'t.ptDeleted':['🗑 정기 업무 삭제됨','🗑 Routine work deleted'],
+  't.setSaved':['✅ 설정 저장됨','✅ Settings saved'],'t.csvEmpty':['다운로드할 데이터가 없어요','Nothing to download'],'t.csvOk':['✅ CSV 다운로드 완료 (샘플 1건당 1행)','✅ CSV downloaded (one row per sample)'],
+  'hol.usWork':['US 연방: 근무일','US federal: working day'],'hol.gaWork':['GA 주: 근무일','GA state: working day'],'hol.us':['US 연방','US federal'],'hol.ga':['GA 주','GA state'],'hol.est':['추정(주지사 공표 전)','estimated (not yet proclaimed)'],
+  'cfg.fail':['⚠️ <b>firebase-config.js</b>를 불러오지 못했습니다. 이 앱은 GitHub Pages 주소(https://…github.io/…)에서 열어야 합니다. 파일을 더블클릭해서 열면 동작하지 않습니다. ({0})','⚠️ Could not load <b>firebase-config.js</b>. Open this app from its GitHub Pages URL (https://…github.io/…); double-clicking the file will not work. ({0})'],
+  'csv.h':[['의뢰번호','회사','공정','요청부서','처리구매팀','의뢰자','고객PO','긴급도','의뢰일','접수일','측정예정일','결과약속일','결과발송일','단계','담당분석자','장비','TAT(일)','약속일준수','Sample ID','물질','Lot No.','용기','Volume(mL)','Qty','채취일','분석항목','전처리','비고'],
+           ['Request No.','Company','Division','Department','Purchasing team','Requester','Customer PO','Priority','Request date','Received','Planned run','Due date','Sent','Stage','Analyst','Instrument','TAT(days)','On time','Sample ID','Material','Lot No.','Container','Volume(mL)','Qty','Sampled','Analysis items','Pre-treat','Remarks']],
+};
+let lang = (()=>{ try { return localStorage.getItem('jnfam_anl_lang') || 'ko'; } catch(e){ return 'ko'; } })();   // 기본 한국어, 마지막 선택 기억
+const t = (k, ...a) => { const v=I18N[k]; if (!v) return k; let s = v[lang==='en'?1:0]; if (typeof s!=='string') return s; a.forEach((x,i)=>{ s=s.split(`{${i}}`).join(x); }); return s; };
+function applyStatic(){
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
+  document.querySelectorAll('[data-i18n-html]').forEach(el => el.innerHTML = t(el.dataset.i18nHtml));
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => el.placeholder = t(el.dataset.i18nPh));
+  document.querySelectorAll('#langTg button').forEach(b => b.classList.toggle('on', b.dataset.l===lang));
+}
+
+/* ── Firebase 설정은 firebase-config.js에서 읽음 (별도 파일) ── */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, push, update, remove, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+let CFG;
+try { CFG = await import('./firebase-config.js'); }
+catch(e){ applyStatic(); const b=document.getElementById('banner'); b.innerHTML=t('cfg.fail', e.message); b.classList.add('show'); throw e; }
+const ROOT = CFG.DATA_ROOT || 'analysis';
+const app = initializeApp(CFG.firebaseConfig);
+const db  = getDatabase(app);
+const reqRef = ref(db, ROOT+'/requests');
+const taskRef = ref(db, ROOT+'/tasks');
+const patRef = ref(db, ROOT+'/patterns');
+const setRef = ref(db, ROOT+'/settings');
+const LS = 'jnfam_anl_';           // localStorage 접두어 (같은 github.io 다른 앱과 충돌 방지)
+
+let requests = {}, tasks = {}, patterns = {};
+let settings = {capacity: 20, tatDays: 5, analysts: '', instruments: 'ICP-MS'};
+const today = new Date(); today.setHours(0,0,0,0);
+let curYear = today.getFullYear(), curMonth = today.getMonth();
+let base = lsGet('base') || 'due';
+let calStage = '', showTasks = true, syncState = 'wait';
+
+/* ── 공통 유틸 ── */
+function lsGet(k){ try { return localStorage.getItem(LS+k); } catch(e){ return null; } }
+function lsSet(k,v){ try { localStorage.setItem(LS+k, v); } catch(e){} }
+const $ = id => document.getElementById(id);
+const escH = s => String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const parseD = ds => new Date(ds+'T00:00:00');
+const addDays = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x; };
+const TODAY = ymd(today);
+const diffDays = ds => Math.round((parseD(ds) - today) / 86400000);
+const DOW = () => lang==='en' ? ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] : ['일','월','화','수','목','금','토'];
+const LOC = () => lang==='en' ? 'en-US' : 'ko-KR';
+const fmtMD = ds => { if(!ds) return '-'; const d=parseD(ds); return `${d.getMonth()+1}/${d.getDate()}(${DOW()[d.getDay()]})`; };
+const list = s => String(s||'').split(',').map(x=>x.trim()).filter(Boolean);
+
+function setSync(state){
+  syncState = state;
+  $('syncDot').className = 'sync-dot ' + (state==='on'?'connected':state==='saving'?'syncing':'');
+  $('syncText').textContent = t('sync.'+state);
+}
+function showToast(msg, err=false){
+  const el=$('toast'); el.textContent=msg; el.className='toast'+(err?' error':'')+' show';
+  clearTimeout(showToast._t); showToast._t=setTimeout(()=>el.className='toast', 2800);
+}
+window.closeOv = id => $(id).classList.remove('show');
+async function guard(fn, okMsg){
+  setSync('saving');
+  try { await fn(); if (okMsg) showToast(okMsg); setSync('on'); return true; }
+  catch(e){ setSync('on'); showToast(t('t.saveFail', e.message, ROOT), true); return false; }
+}
+
+/* ── 단계 & 업무 종류 (저장 키는 한글, 표시는 언어별) ── */
+const STAGES = [
+  {k:'접수대기',   en:'Awaiting samples', c:'#64748b', b:'#f1f5f9', d:['의뢰서 수신, 샘플 미도착','Form received, samples not yet in']},
+  {k:'접수',       en:'Received',         c:'#2563eb', b:'#eff4ff', d:['샘플 도착·접수 완료','Samples received and logged']},
+  {k:'전처리',     en:'Pre-treatment',    c:'#ca8a04', b:'#fefce8', d:['전처리 진행','Pre-treatment in progress']},
+  {k:'측정',       en:'Measuring',        c:'#7c3aed', b:'#f5f3ff', d:['장비 측정','Instrument run']},
+  {k:'데이터검토', en:'Data review',      c:'#0891b2', b:'#ecfeff', d:['결과 검토·보고서 작성','Result review and report']},
+  {k:'결과발송',   en:'Result sent',      c:'#16a34a', b:'#f0fdf4', d:['결과 발송 완료','Results sent to customer']},
+  {k:'보류',       en:'On hold',          c:'#94a3b8', b:'#f8fafc', d:['보류','On hold']},
+];
+const FLOW = STAGES.slice(0,6);
+const STG = k => STAGES.find(s=>s.k===k) || STAGES[0];
+const stName = k => lang==='en' ? STG(k).en : STG(k).k;
+const isDone = r => r.stage==='결과발송';
+const isOpen = r => r.stage!=='결과발송' && r.stage!=='보류';
+const sv = s => `--cc:${s.c};--cb:${s.b}`;
+const stageBadge = k => `<span class="badge" style="${sv(STG(k))}">${escH(stName(k))}</span>`;
+const L2 = a => a[lang==='en'?1:0];
+
+const CATS = [
+  {k:'정기분석', en:'Routine analysis', ic:'◆', c:'#7c3aed', b:'#f5f3ff'},
+  {k:'장비점검', en:'Instrument check', ic:'▲', c:'#ea580c', b:'#fff7ed'},
+  {k:'교정·QC',  en:'Calibration/QC',   ic:'■', c:'#0891b2', b:'#ecfeff'},
+  {k:'샘플관리', en:'Sample mgmt',      ic:'●', c:'#16a34a', b:'#f0fdf4'},
+  {k:'기타',     en:'Other',            ic:'●', c:'#64748b', b:'#f1f5f9'},
+];
+const CAT = k => CATS.find(c=>c.k===k) || CATS[CATS.length-1];
+const catName = k => lang==='en' ? CAT(k).en : CAT(k).k;
+const catBadge = k => { const c=CAT(k); return `<span class="badge" style="${sv(c)}">${c.ic} ${escH(catName(k))}</span>`; };
+const catOptions = sel => CATS.map(c=>`<option value="${c.k}"${c.k===sel?' selected':''}>${c.ic} ${escH(lang==='en'?c.en:c.k)}</option>`).join('');
+const TSTAT = [['예정','Planned'],['진행중','In progress'],['완료','Done'],['보류','On hold']];
+const tsOptions = sel => TSTAT.map(([k,en])=>`<option value="${k}"${k===sel?' selected':''}>${lang==='en'?en:k}</option>`).join('');
+
+/* ── 의뢰 계산값 ── */
+const smpCount = r => (r.samples||[]).length;
+const mats = r => [...new Set((r.samples||[]).map(s=>s.mat).filter(Boolean))].join('/');
+const items = r => [...new Set((r.samples||[]).flatMap(s=>String(s.items||'').split(/[,/;]/).map(x=>x.trim())).filter(Boolean))].join(', ');
+const deptLabel = r => [r.company, r.division, r.dept].filter(Boolean).join(' · ') || '-';
+const planDate = r => r.plannedDate || r.dueDate || r.receivedDate || '';
+const showDate = r => base==='plan' ? planDate(r) : (r.dueDate || r.plannedDate || r.receivedDate || '');
+const isLate = r => isOpen(r) && r.dueDate && r.dueDate < TODAY;
+const isUrgent = r => /urgent|긴급/i.test(r.priority||'');
+function tat(r){
+  if (!isDone(r) || !r.completedDate) return null;
+  const from = r.receivedDate || r.reqDate; if (!from) return null;
+  return Math.round((parseD(r.completedDate)-parseD(from))/86400000);
+}
+const onTime = r => isDone(r) && r.completedDate && r.dueDate ? r.completedDate <= r.dueDate : null;
+const reqEntries = () => Object.entries(requests).filter(([,r])=>r);
+
+/* ── 휴일: 미국 연방(US) + 조지아 주(GA) — Task Calendar와 동일 ── */
+const nthDow  = (y,m,dow,n) => { const f=new Date(y,m,1); return new Date(y,m,1+((dow-f.getDay()+7)%7)+(n-1)*7); };
+const lastDow = (y,m,dow)   => { const l=new Date(y,m+1,0); return new Date(y,m,l.getDate()-((l.getDay()-dow+7)%7)); };
+function easter(y){
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+        h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+        mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;
+  return new Date(y,mo-1,da);
+}
+function usHolidays(y){
+  const L = [
+    {d:new Date(y,0,1),ko:'신정',en:"New Year's Day"},{d:nthDow(y,0,1,3),ko:'MLK 데이',en:'Martin Luther King Jr. Day'},
+    {d:nthDow(y,1,1,3),ko:'대통령의 날',en:"Washington's Birthday"},{d:lastDow(y,4,1),ko:'메모리얼 데이',en:'Memorial Day'},
+    {d:new Date(y,5,19),ko:'준틴스',en:'Juneteenth'},{d:new Date(y,6,4),ko:'독립기념일',en:'Independence Day'},
+    {d:nthDow(y,8,1,1),ko:'노동절',en:'Labor Day'},{d:nthDow(y,9,1,2),ko:'콜럼버스 데이',en:'Columbus Day'},
+    {d:new Date(y,10,11),ko:'재향군인의 날',en:'Veterans Day'},{d:nthDow(y,10,4,4),ko:'추수감사절',en:'Thanksgiving Day'},
+    {d:new Date(y,11,25),ko:'크리스마스',en:'Christmas Day'},
+  ];
+  const out = {};
+  L.forEach(h => {
+    out[ymd(h.d)] = {ko:h.ko, en:h.en, observed:false};
+    const w=h.d.getDay(); if (w===6||w===0) out[ymd(addDays(h.d, w===6?-1:1))] = {ko:h.ko, en:h.en, observed:true};
+  });
+  return out;
+}
+const GA_OFFICIAL = {
+  2025: [['2025-01-01','신정',"New Year's Day"],['2025-01-20','MLK 데이','Martin Luther King Jr. Day'],['2025-04-18','주 휴일(성금요일)','State Holiday (Good Friday)'],['2025-05-26','메모리얼 데이','Memorial Day'],['2025-06-19','준틴스','Juneteenth'],['2025-07-04','독립기념일','Independence Day'],['2025-09-01','노동절','Labor Day'],['2025-10-13','콜럼버스 데이','Columbus Day'],['2025-11-11','재향군인의 날','Veterans Day'],['2025-11-27','추수감사절','Thanksgiving Day'],['2025-11-28','주 휴일','State Holiday (day after Thanksgiving)'],['2025-12-25','크리스마스','Christmas Day'],['2025-12-26','대통령의 날(GA 이동)',"Washington's Birthday (observed by GA)"]],
+  2026: [['2026-01-01','신정',"New Year's Day"],['2026-01-19','MLK 데이','Martin Luther King Jr. Day'],['2026-04-03','주 휴일(성금요일)','State Holiday (Good Friday)'],['2026-05-25','메모리얼 데이','Memorial Day'],['2026-06-19','준틴스','Juneteenth'],['2026-07-03','독립기념일(대체)','Independence Day (observed)'],['2026-09-07','노동절','Labor Day'],['2026-10-12','콜럼버스 데이','Columbus Day'],['2026-11-11','재향군인의 날','Veterans Day'],['2026-11-26','추수감사절','Thanksgiving Day'],['2026-11-27','주 휴일','State Holiday (day after Thanksgiving)'],['2026-12-24','대통령의 날(GA 이동)',"Washington's Birthday (observed by GA)"],['2026-12-25','크리스마스','Christmas Day']],
+};
+function gaHolidays(y){
+  const out = {};
+  if (GA_OFFICIAL[y]) { GA_OFFICIAL[y].forEach(([ds,ko,en]) => out[ds]={ko,en,est:false}); return out; }
+  Object.entries(usHolidays(y)).forEach(([ds,h]) => {
+    const w=parseD(ds).getDay(); if (w===0||w===6||h.en==="Washington's Birthday") return;
+    out[ds] = {ko:h.ko+(h.observed?'(대체)':''), en:h.en+(h.observed?' (observed)':''), est:true};
+  });
+  out[ymd(addDays(easter(y),-2))] = {ko:'주 휴일(성금요일)', en:'State Holiday (Good Friday)', est:true};
+  out[ymd(addDays(nthDow(y,10,4,4),1))] = {ko:'주 휴일', en:'State Holiday (day after Thanksgiving)', est:true};
+  let x=new Date(y,11,24); while (x.getDay()===0||x.getDay()===6||out[ymd(x)]) x=addDays(x,-1);
+  out[ymd(x)] = {ko:'대통령의 날(GA 이동)', en:"Washington's Birthday (observed by GA)", est:true};
+  return out;
+}
+const _usC={}, _gaC={};
+const usYear = y => (_usC[y] ||= usHolidays(y));
+const gaYear = y => (_gaC[y] ||= gaHolidays(y));
+function getHoliday(ds){
+  const y=+ds.slice(0,4);
+  const us=usYear(y)[ds]||usYear(y+1)[ds]||null, ga=gaYear(y)[ds]||gaYear(y+1)[ds]||null;
+  return (us||ga) ? {us,ga} : null;
+}
+const holName = h => {
+  if (lang==='en'){ const a=h.us?h.us.en+(h.us.observed?' (observed)':''):null, b=h.ga?h.ga.en:null;
+    if (a&&b) return b.startsWith(h.us.en) ? (b.length>=a.length?b:a) : `${a} / ${b}`; return a||b; }
+  const a=h.us?h.us.ko+(h.us.observed?'(대체)':''):null, b=h.ga?h.ga.ko:null;
+  if (a&&b) return a.replace('(대체)','')===b.replace('(대체)','') ? (b.length>=a.length?b:a) : `${a} / ${b}`; return a||b;
+};
+const holTitle = h => [h.us?`${t('hol.us')}: ${h.us.en}${h.us.observed?' (Observed)':''}`:t('hol.usWork'), h.ga?`${t('hol.ga')}: ${h.ga.en}${h.ga.est?' — '+t('hol.est'):''}`:t('hol.gaWork')].join('\n');
+const holTag = h => h ? `<span class="hol-label${h.us?'':' ga-only'}${h.ga?'':' us-only'}" title="${escH(holTitle(h))}">${h.us?'<b class="hb us">US</b>':''}${h.ga?`<b class="hb ga${h.ga.est?' est':''}">GA</b>`:''}${escH(holName(h))}</span>` : '';
+const isOffDay = ds => { const w=parseD(ds).getDay(); return w===0||w===6||!!getHoliday(ds); };
+function addBiz(ds, n){ let d=parseD(ds), k=0; while (k<n){ d=addDays(d,1); if(!isOffDay(ymd(d))) k++; } return ymd(d); }
+
+/* ── 정기 업무 패턴 엔진 (Task Calendar와 동일 구조) ── */
+const mondayOf = d => addDays(d, -((d.getDay()+6)%7));
+function patternOccs(p, from, to){
+  const out=[]; if (!p||!p.start) return out;
+  const lo = from>p.start?from:p.start, hi=(p.end&&p.end<to)?p.end:to; if (lo>hi) return out;
+  const iv=Math.max(1,+p.interval||1), st=parseD(p.start);
+  if (p.freq==='monthly'){
+    let y=parseD(lo).getFullYear(), m=parseD(lo).getMonth(); const hy=parseD(hi).getFullYear(), hm=parseD(hi).getMonth();
+    while (y<hy||(y===hy&&m<=hm)){
+      const diff=(y-st.getFullYear())*12+(m-st.getMonth());
+      if (diff>=0&&diff%iv===0){ const last=new Date(y,m+1,0).getDate(); const dd=p.mday==='last'?last:Math.min(+p.mday||1,last);
+        const ds=ymd(new Date(y,m,dd)); if (ds>=lo&&ds<=hi) out.push(ds); }
+      if (++m>11){ m=0; y++; }
+    }
+  } else {
+    const days=(p.days||[]).map(Number), w0=mondayOf(st);
+    for (let d=parseD(lo); ymd(d)<=hi; d=addDays(d,1)){
+      if (!days.includes(d.getDay())) continue;
+      if (Math.round((mondayOf(d)-w0)/604800000)%iv===0) out.push(ymd(d));
+    }
+  }
+  return out;
+}
+const vKey = (pid,occ) => `v~${pid}~${occ}`;
+function parseVKey(k){ if(!k||!k.startsWith('v~')) return null; const [,pid,occ]=k.split('~'); return {pid,occ}; }
+function taskEntries(from, to){
+  const real = Object.entries(tasks).filter(([,x])=>x);
+  const done = new Set(real.filter(([,x])=>x.patternId).map(([,x])=>x.patternId+'|'+x.occDate));
+  const virt = [];
+  Object.entries(patterns).forEach(([pid,p]) => {
+    if (!p||p.active===false) return;
+    patternOccs(p, from, to).forEach(occ => {
+      if ((p.skip&&p.skip[occ])||done.has(pid+'|'+occ)) return;
+      virt.push([vKey(pid,occ), {text:p.text, deadline:occ, worker:p.worker||'', category:p.category, status:'예정', patternId:pid, occDate:occ, _virtual:true}]);
+    });
+  });
+  return real.concat(virt);
+}
+async function writeTask(key, changes){
+  const v = parseVKey(key);
+  if (!v) return update(ref(db, ROOT+'/tasks/'+key), changes);
+  const p = patterns[v.pid]||{};
+  return push(taskRef, {text:p.text||'', deadline:v.occ, worker:p.worker||'', category:p.category||'기타', status:'예정',
+    patternId:v.pid, occDate:v.occ, createdAt:new Date().toISOString(), ...changes});
+}
+function taskStatusMark(x){
+  if (x.status==='완료') return '<span class="st done">✓</span>';
+  if (x.status==='진행중') return `<span class="st inprog">${t('mk.wip')}</span>`;
+  if (x.status==='보류') return `<span class="st hold">${t('mk.hold')}</span>`;
+  if (x.deadline<TODAY) return `<span class="st late">${t('mk.late')}</span>`;
+  return '';
+}
+
+/* ── Firebase 구독 ── */
+const rerender = () => {
+  renderCalendar();
+  if ($('tab-list').style.display!=='none') renderList();
+  if ($('tab-pattern').style.display!=='none') renderPatterns();
+  fillDatalists();
+};
+const onErr = what => e => { setSync('off'); showToast(t('t.readFail', t('r.'+what), e.message, ROOT), true); };
+onValue(reqRef, s => { requests=s.val()||{}; setSync('on'); rerender(); }, onErr('requests'));
+onValue(taskRef, s => { tasks=s.val()||{}; rerender(); }, onErr('tasks'));
+onValue(patRef, s => { patterns=s.val()||{}; rerender(); }, onErr('patterns'));
+onValue(setRef, s => { settings={...settings, ...(s.val()||{})}; loadSettingsForm(); rerender(); }, onErr('settings'));
+
+function fillDatalists(){
+  $('dlAnalyst').innerHTML = list(settings.analysts).map(a=>`<option>${escH(a)}</option>`).join('');
+  $('dlInst').innerHTML = list(settings.instruments).map(a=>`<option>${escH(a)}</option>`).join('');
+  const cos = [...new Set(reqEntries().map(([,r])=>r.company).filter(Boolean))].sort();
+  $('dlCompany').innerHTML = cos.map(c=>`<option>${escH(c)}</option>`).join('');
+  const fc=$('fCompany'), cur=fc.value;
+  fc.innerHTML = `<option value="">${t('list.allCo')}</option>` + cos.map(c=>`<option${c===cur?' selected':''}>${escH(c)}</option>`).join('');
+  const fs=$('fStage'), cs=fs.value;
+  fs.innerHTML = `<option value="">${t('list.allStages')}</option>` + STAGES.map(s=>`<option value="${s.k}"${s.k===cs?' selected':''}>${escH(stName(s.k))}</option>`).join('');
+}
+
+/* ── 언어 전환 ── */
+window.setLang = l => {
+  lang = l; try { localStorage.setItem('jnfam_anl_lang', l); } catch(e){}
+  applyStatic(); setSync(syncState);
+  $('todayBadge').textContent = today.toLocaleDateString(LOC(),{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  $('calHeader').innerHTML = (lang==='en'?['MON','TUE','WED','THU','FRI']:['MON','TUE','WED','THU','FRI']).map(d=>`<div class="cal-dow">${d}</div>`).join('') + `<div class="cal-dow" style="font-size:10px">${t('cal.weekend')}</div>`;
+  $('dbInfo').innerHTML = t('set.db', escH(CFG.firebaseConfig.projectId||''), escH(ROOT));
+  // 선택 상자(값은 그대로, 표시만 교체)
+  const keep = (id, html) => { const el=$(id), v=el.value; el.innerHTML=html; el.value=v; };
+  keep('tk-cat', catOptions($('tk-cat').value||'기타'));
+  keep('tk-status', tsOptions($('tk-status').value||'예정'));
+  keep('pt-cat', catOptions($('pt-cat').value||'정기분석'));
+  keep('ed-stage', STAGES.map(s=>`<option value="${s.k}">${escH(stName(s.k))}</option>`).join(''));
+  keep('pt-mday', Array.from({length:31},(_,i)=>`<option value="${i+1}">${t('pt.dayN',i+1)}</option>`).join('')+`<option value="last">${t('pt.last')}</option>`);
+  const days = [...document.querySelectorAll('#pt-days input:checked')].map(i=>+i.value);
+  $('pt-days').innerHTML = [1,2,3,4,5,6,0].map(v=>`<label><input type="checkbox" value="${v}"${days.includes(v)?' checked':''} onchange="ptPreview()">${DOW()[v]}</label>`).join('');
+  ptFreqUI(); ptPreview();
+  edTitleUpdate(); renderSamples();
+  rerender();
+  if ($('reqOverlay').classList.contains('show') && openReqId) openReq(openReqId);
+  if ($('dayOverlay').classList.contains('show') && openDayDs) openDay(openDayDs);
+};
+
+/* ── 탭 ── */
+window.switchTab = name => {
+  ['calendar','list','register','pattern','settings'].forEach(x => $('tab-'+x).style.display = x===name?'block':'none');
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab===name));
+  if (name==='list') renderList();
+  if (name==='pattern') renderPatterns();
+  if (name==='calendar') renderCalendar();
+};
+window.changeMonth = d => { curMonth+=d; if(curMonth>11){curMonth=0;curYear++;} if(curMonth<0){curMonth=11;curYear--;} renderCalendar(); };
+window.goToday = () => { curYear=today.getFullYear(); curMonth=today.getMonth(); renderCalendar(); };
+window.setBase = b => { base=b; lsSet('base', b); renderCalendar(); };
+window.setCalStage = k => { calStage = calStage===k ? '' : k; renderCalendar(); };
+window.toggleTasks = () => { showTasks=!showTasks; renderCalendar(); };
+
+/* ═════════════ 달력 ═════════════ */
+function reqChip(id, r, small){
+  const s=STG(r.stage), late=isLate(r);
+  const label = `${r.company||'-'}${r.division?'·'+r.division:''} ${mats(r)} ${smpCount(r)}ea`;
+  const tip = `[${r.reqNo||''}] ${deptLabel(r)}\n${mats(r)} ${smpCount(r)}ea · ${items(r)}\n${t('meta.due')} ${r.dueDate||'-'} · ${t('meta.run')} ${planDate(r)||'-'} · ${stName(r.stage)}`;
+  return `<div class="chip${small?' small':''}${isDone(r)?' is-done':''}${late?' is-late':''}" style="${sv(s)}" title="${escH(tip)}" onclick="openReq('${id}',event)">
+    ${isUrgent(r)&&!isDone(r)?`<span class="st urg">${t('mk.urg')}</span>`:''}${late?`<span class="st late">${t('mk.late')}</span>`:''}<span class="tag">${escH(stName(r.stage))}</span><span class="tx">${escH(label)}</span></div>`;
+}
+function taskChip(x, ds, small){
+  const c=CAT(x.category);
+  return `<div class="chip task${small?' small':''}${x._virtual?' virt':''}${x.status==='완료'?' is-done':''}" style="${sv(c)}" title="[${escH(catName(x.category))}] ${escH(x.text)}" onclick="openDay('${ds}',event)">
+    <span>${c.ic}</span>${x.patternId?'<span class="rp">↻</span>':''}${taskStatusMark(x)}<span class="tx">${escH(x.text)}</span></div>`;
+}
+function loadTag(load, ds){
+  const n = load[ds]||0; if (!n) return '';
+  const cap = +settings.capacity||0;
+  const cls = cap && n>cap ? ' over' : cap && n>=cap*0.8 ? ' mid' : '';
+  return `<span class="load${cls}" title="${escH(t('load.tip', n, cap||'-'))}">🧪 ${n}${cap?'/'+cap:''}</span>`;
+}
+function renderCalendar(){
+  $('monthTitle').textContent = lang==='en' ? new Date(curYear,curMonth,1).toLocaleDateString('en-US',{month:'short',year:'numeric'}) : `${curYear}년 ${curMonth+1}월`;
+  document.querySelectorAll('#baseSeg button').forEach(b=>b.classList.toggle('on', b.dataset.b===base));
+  const first=new Date(curYear,curMonth,1); const sd=(first.getDay()+6)%7;
+  const calStart=addDays(first,-sd), calEnd=addDays(calStart,41), from=ymd(calStart), to=ymd(calEnd);
+  const mk=`${curYear}-${String(curMonth+1).padStart(2,'0')}`;
+
+  const byDate={}, load={};
+  const reqs = reqEntries();
+  reqs.forEach(([id,r]) => {
+    const p=planDate(r); if (p && isOpen(r)) load[p]=(load[p]||0)+smpCount(r);
+    if (calStage && r.stage!==calStage) return;
+    const ds=showDate(r); if (ds && ds>=from && ds<=to) (byDate[ds] ||= []).push({kind:'req', id, r});
+  });
+  if (showTasks) taskEntries(from,to).forEach(([k,x]) => { if (x.deadline) (byDate[x.deadline] ||= []).push({kind:'task', key:k, t:x}); });
+  const ord = it => it.kind==='req' ? (isLate(it.r)?0:isUrgent(it.r)&&!isDone(it.r)?1:isDone(it.r)?4:2) : 3;
+  Object.values(byDate).forEach(a=>a.sort((x,y)=>ord(x)-ord(y)));
+
+  const mReq = reqs.map(([,r])=>r).filter(r=>(showDate(r)||'').startsWith(mk));
+  const done = mReq.filter(isDone), ot = done.filter(r=>onTime(r)===true).length, otN = done.filter(r=>onTime(r)!==null).length;
+  $('statsRow').innerHTML = [
+    {l:t('st.req'), v:mReq.length, c:'var(--text)', bg:'var(--white)'},
+    {l:t('st.smp'), v:mReq.reduce((a,r)=>a+smpCount(r),0), c:'var(--accent)', bg:'var(--accent-l)'},
+    {l:t('st.open'), v:mReq.filter(isOpen).length, c:'var(--blue)', bg:'var(--blue-l)'},
+    {l:t('st.late'), v:mReq.filter(isLate).length, c:'var(--red)', bg:'var(--red-l)'},
+    {l:t('st.sent'), v:done.length, c:'var(--green)', bg:'var(--green-l)'},
+    {l:t('st.ontime'), v:otN?Math.round(ot/otN*100)+'%':'-', c:'var(--green)', bg:'var(--green-l)'},
+    {l:t('st.allOpen'), v:reqs.filter(([,r])=>isOpen(r)).length, c:'var(--text2)', bg:'var(--white)'},
+  ].map(s=>`<div class="stat-chip" style="background:${s.bg}"><span style="color:var(--text3);font-size:11px">${s.l}</span><span class="stat-val" style="color:${s.c}">${s.v}</span></div>`).join('');
+
+  const cnt={}; mReq.forEach(r=>cnt[STG(r.stage).k]=(cnt[STG(r.stage).k]||0)+1);
+  $('legend').innerHTML = `<span class="lg-title">${t('lg.stage')}</span>` +
+    STAGES.map(s=>`<span class="pill${calStage===s.k?' on':''}${calStage&&calStage!==s.k?' off':''}" style="${sv(s)}" title="${escH(L2(s.d))}" onclick="setCalStage('${s.k}')">${escH(stName(s.k))} <span class="n">${cnt[s.k]||0}</span></span>`).join('') +
+    `<span class="pill${showTasks?' on':' off'}" style="--cc:#475569;--cb:#fff;margin-left:8px" onclick="toggleTasks()">${t(showTasks?'lg.tasksOn':'lg.tasksOff')}</span>` +
+    (calStage?` <span class="pill" style="--cc:#475569;--cb:#fff;border-color:#cbd5e1" onclick="setCalStage('${calStage}')">${t('lg.all')}</span>`:'');
+
+  const cellItems = (ds, small) => {
+    const arr=byDate[ds]||[], MAX=small?4:5;
+    return arr.slice(0,MAX).map(it=>it.kind==='req'?reqChip(it.id,it.r,small):taskChip(it.t,ds,small)).join('') +
+      (arr.length>MAX?`<div class="task-more">${t('more', arr.length-MAX)}</div>`:'');
+  };
+  const DW = DOW();
+  const grid=$('calGrid'); grid.innerHTML='';
+  for (let w=0; w<6; w++){
+    for (let wd=0; wd<5; wd++){
+      const d=addDays(calStart, w*7+wd), ds=ymd(d), hol=getHoliday(ds);
+      let cls='cal-day'; if (hol) cls+=' holiday'+(hol.us?'':' ga-only')+(hol.ga?'':' us-only');
+      if (d.getMonth()!==curMonth) cls+=' other-month'; if (ds===TODAY) cls+=' today';
+      const cell=document.createElement('div'); cell.className=cls;
+      cell.innerHTML = `<div class="day-num"><span class="dn">${d.getDate()}${holTag(hol)}</span>${loadTag(load,ds)}${ds===TODAY?'<span class="today-label">TODAY</span>':''}</div>${cellItems(ds,false)}`;
+      cell.onclick = ev => { if (!ev.target.closest('.chip')) openDay(ds, ev); };
+      grid.appendChild(cell);
+    }
+    const sat=addDays(calStart,w*7+5), sun=addDays(calStart,w*7+6);
+    const wl = (d,lab) => { const ds=ymd(d), h=getHoliday(ds);
+      return `<div class="weekend-day-label${h?' hol':''}" data-ds="${ds}">${lab} ${d.getDate()} ${holTag(h)} ${loadTag(load,ds)}${ds===TODAY?' <span class="today-label">TODAY</span>':''}</div>${cellItems(ds,true)}`; };
+    const wk=document.createElement('div');
+    wk.className='cal-day weekend-cell'+((sat.getMonth()===curMonth||sun.getMonth()===curMonth)?'':' other-month');
+    wk.innerHTML = wl(sat,DW[6])+wl(sun,DW[0]);
+    wk.onclick = ev => { if (ev.target.closest('.chip')) return; const lab=ev.target.closest('.weekend-day-label'); openDay(lab?lab.dataset.ds:ymd(sat), ev); };
+    grid.appendChild(wk);
+  }
+}
+
+/* ── 날짜 모달 ── */
+let openDayDs = null, openReqId = null;
+window.openDay = (ds, ev) => {
+  if (ev) ev.stopPropagation();
+  openDayDs = ds;
+  const h=getHoliday(ds);
+  $('dayTitle').textContent = parseD(ds).toLocaleDateString(LOC(),{month:'long',day:'numeric',weekday:'long'});
+  const planned = reqEntries().filter(([,r])=>planDate(r)===ds && isOpen(r)).reduce((a,[,r])=>a+smpCount(r),0);
+  $('daySub').innerHTML = (h?`<b style="color:var(--red)">${escH(holName(h))}</b> · `:'') + `${t('day.planned')} <b>${planned}</b>${settings.capacity?` / ${t('day.cap')} ${settings.capacity}`:''}`;
+  const dueHere = reqEntries().filter(([,r])=>r.dueDate===ds);
+  const planHere = reqEntries().filter(([,r])=>planDate(r)===ds && r.dueDate!==ds);
+  const tks = taskEntries(ds,ds).filter(([,x])=>x.deadline===ds);
+  const mark = (cls, txt) => `<span class="st ${cls}" style="padding:1px 6px;border-radius:4px">${txt}</span>`;
+  const reqCard = ([id,r]) => `<div class="card req" style="${sv(STG(r.stage))}" onclick="openReq('${id}')">
+      <div class="card-title">${escH(r.reqNo||t('noNo'))} · ${escH(deptLabel(r))}</div>
+      <div class="meta">${stageBadge(r.stage)}${isUrgent(r)?mark('urg',t('mk.urg')):''}${isLate(r)?mark('late',t('mk.late')):''}
+        <span class="meta-chip">🧪 ${escH(mats(r))} ${smpCount(r)}ea</span><span class="meta-chip">${t('meta.due')} ${fmtMD(r.dueDate)}</span><span class="meta-chip">${t('meta.run')} ${fmtMD(planDate(r))}</span>${r.analyst?`<span class="meta-chip">👤 ${escH(r.analyst)}</span>`:''}</div></div>`;
+  let html = '';
+  if (dueHere.length) html += `<div class="sec-h">${t('day.due')} (${dueHere.length})</div>` + dueHere.map(reqCard).join('');
+  if (planHere.length) html += `<div class="sec-h">${t('day.plan')} (${planHere.length})</div>` + planHere.map(reqCard).join('');
+  html += `<div class="sec-h">${t('day.work')} (${tks.length})</div>`;
+  html += tks.length ? tks.map(([k,x]) => `<div class="card task" style="${sv(CAT(x.category))}">
+      <button class="icon-btn edit" onclick="openTaskForm('${k}')" title="${t('btn.edit')}">✏️</button>
+      <button class="icon-btn del" onclick="deleteTask('${k}','${ds}')" title="${t('btn.del')}">×</button>
+      <div class="card-title">${escH(x.text)}</div>
+      <div class="meta">${catBadge(x.category)}${x.patternId?`<span class="pattern-tag">${t('tag.routine')}${x._virtual?'':' '+t('tag.saved')}</span>`:''}${x.worker?`<span class="meta-chip">👤 ${escH(x.worker)}</span>`:''}
+        <select class="sel" style="width:auto;padding:3px 8px;font-size:11px" onchange="setTaskStatus('${k}',this.value,'${ds}')">${tsOptions(x.status)}</select></div></div>`).join('')
+    : `<div class="note" style="margin-bottom:8px">${t('day.noWork')}</div>`;
+  html += `<div class="btn-row" style="justify-content:space-between"><button class="btn ghost sm" onclick="newReqOn('${ds}')">${t('day.addReq')}</button><button class="btn sm" onclick="openTaskForm(null,'${ds}')">${t('day.addTask')}</button></div>`;
+  $('dayBody').innerHTML = html;
+  $('dayOverlay').classList.add('show');
+};
+window.newReqOn = ds => { closeOv('dayOverlay'); resetEditor(); setEd('dueDate', ds); switchTab('register'); };
+
+/* ── 업무(Task) ── */
+window.openTaskForm = (key, ds) => {
+  let x = {text:'', deadline:ds||TODAY, category:'기타', worker:'', status:'예정'};
+  if (key){ const v=parseVKey(key); if (v){ const p=patterns[v.pid]||{}; x={text:p.text, deadline:v.occ, category:p.category, worker:p.worker, status:'예정'}; } else x={...x, ...tasks[key]}; }
+  $('taskFormTitle').textContent = key ? t('tk.edit') : t('tk.add');
+  $('tk-key').value = key||''; $('tk-text').value=x.text||''; $('tk-date').value=x.deadline||'';
+  $('tk-cat').innerHTML = catOptions(CAT(x.category).k); $('tk-worker').value=x.worker||''; $('tk-status').innerHTML = tsOptions(x.status||'예정');
+  $('taskOverlay').classList.add('show');
+};
+window.saveTask = async () => {
+  const key=$('tk-key').value, data={text:$('tk-text').value.trim(), deadline:$('tk-date').value, category:$('tk-cat').value, worker:$('tk-worker').value.trim(), status:$('tk-status').value};
+  if (!data.text||!data.deadline){ showToast(t('t.taskReq'), true); return; }
+  const ok = await guard(() => key ? writeTask(key, data) : push(taskRef, {...data, createdAt:new Date().toISOString()}), key?t('t.taskEdited'):t('t.taskAdded'));
+  if (ok){ closeOv('taskOverlay'); if ($('dayOverlay').classList.contains('show')) openDay(data.deadline); }
+};
+window.setTaskStatus = async (key, val, ds) => { await guard(()=>writeTask(key,{status:val}), t('t.status')); openDay(ds); };
+window.deleteTask = async (key, ds) => {
+  const v=parseVKey(key), real=tasks[key], isPat=v||(real&&real.patternId);
+  if (!confirm(isPat?t('c.delPat1'):t('c.delTask'))) return;
+  await guard(async () => {
+    if (v) await update(ref(db, `${ROOT}/patterns/${v.pid}/skip`), {[v.occ]:true});
+    else { if (real&&real.patternId&&real.occDate) await update(ref(db, `${ROOT}/patterns/${real.patternId}/skip`), {[real.occDate]:true}); await remove(ref(db, ROOT+'/tasks/'+key)); }
+  }, t('t.deleted'));
+  openDay(ds);
+};
+
+/* ═════════════ 의뢰 상세 ═════════════ */
+window.openReq = (id, ev) => {
+  if (ev) ev.stopPropagation();
+  const r = requests[id]; if (!r) return;
+  openReqId = id; closeOv('dayOverlay');
+  const mark = (cls, txt) => `<span class="st ${cls}" style="padding:1px 6px;border-radius:4px">${txt}</span>`;
+  $('reqTitle').textContent = r.reqNo || t('noNo');
+  $('reqSub').innerHTML = `${escH(deptLabel(r))} · ${stageBadge(r.stage)} ${isUrgent(r)?mark('urg',t('mk.urg')):''} ${isLate(r)?mark('late',t('mk.lateDays',-diffDays(r.dueDate))):''}`;
+  const log = r.stageLog||{};
+  const curIdx = FLOW.findIndex(s=>s.k===r.stage);
+  const stepper = FLOW.map((s,i)=>`<button class="step${i<curIdx?' past':''}${i===curIdx?' cur':''}" style="${sv(s)}" onclick="setStage('${id}','${s.k}')" title="${escH(L2(s.d))}">${escH(stName(s.k))}<small>${log[s.k]?fmtMD(log[s.k].slice(0,10)):'&nbsp;'}</small></button>`).join('') +
+    `<button class="step${r.stage==='보류'?' cur':''}" style="${sv(STG('보류'))};flex:0 0 80px" onclick="setStage('${id}','보류')">${escH(stName('보류'))}<small>&nbsp;</small></button>`;
+  const kv = arr => `<div class="kv">${arr.map(([k,v])=>`<div><span class="k">${t('f.'+k)}</span><span class="v">${v===undefined||v===''||v===null?'<span style="color:var(--text3)">-</span>':escH(v)}</span></div>`).join('')}</div>`;
+  const tt = tat(r), ot = onTime(r), smp = (r.samples||[]);
+  const dueTxt = r.dueDate ? `${r.dueDate} (${isDone(r)?t('dd.done'):diffDays(r.dueDate)<0?t('mk.lateDays',-diffDays(r.dueDate)):'D-'+diffDays(r.dueDate)})` : '';
+  $('reqBody').innerHTML = `
+    <div class="sec-h">${t('sec.stage')}</div><div class="stepper">${stepper}</div>
+    <div class="sec-h">${t('sec.jnfam')}</div>
+    ${kv([['receivedDate',r.receivedDate],['plannedDate',r.plannedDate],['dueDate',dueTxt],['analyst',r.analyst],['instrument',r.instrument],['completedDate',r.completedDate],
+          ['tat',tt===null?'':t('days',tt)],['ontime',ot===null?'':ot?t('ot.y'):t('ot.n')],['receivedBy',r.receivedBy],['receivedCond',r.receivedCond],['memo',r.memo],
+          ['source',(r.source==='import'?t('src.import'):t('src.manual'))+(r.fileName?` · ${r.fileName}`:'')]])}
+    <div class="sec-h">${t('sec.req')}</div>
+    ${kv([['reqDate',r.reqDate],['dueDate',r.dueDate],['priority',r.priority],['site',r.site],['requester',r.requester],['po',r.po],['email',r.email],['phone',r.phone]])}
+    <div class="sec-h">${t('sec.dept')}</div>
+    ${kv([['company',r.company],['division',r.division],['dept',r.dept],['purTeam',r.purTeam],['purContact',r.purContact],['purEmail',r.purEmail]])}
+    <div class="sec-h">${t('smp.sum', smp.length, smp.reduce((a,s)=>a+(+s.qty||0),0), smp.filter(s=>s.pre==='Y').length)}</div>
+    <div class="tbl-wrap" style="box-shadow:none"><table class="tbl mini"><thead><tr><th>#</th>${['id','mat','lot','cont','vol','qty','sdate','items','pre','rmk'].map(k=>`<th${k==='vol'||k==='qty'?' class="num"':''}>${t('s.'+k)}</th>`).join('')}</tr></thead>
+      <tbody>${smp.length?smp.map((s,i)=>`<tr><td class="muted">${i+1}</td><td><b>${escH(s.id)}</b></td><td>${escH(s.mat)}</td><td class="mono">${escH(s.lot)}</td><td>${escH(s.cont)}</td><td class="num">${escH(s.vol)}</td><td class="num">${escH(s.qty)}</td><td>${escH(s.sdate)}</td><td>${escH(s.items)}</td><td>${escH(s.pre)}</td><td>${escH(s.rmk)}</td></tr>`).join(''):`<tr><td colspan="11" class="muted">${t('smp.none')}</td></tr>`}</tbody></table></div>
+    <div class="sec-h">${t('sec.trans')}</div>
+    ${kv([['delivery',r.delivery],['shipDate',r.shipDate],['storage',r.storage],['tracking',r.tracking],['address',r.address],['hazmat',r.hazmat],['after',r.after]])}
+    <div class="btn-row" style="justify-content:space-between">
+      <button class="btn danger sm" onclick="deleteReq('${id}')">${t('req.del')}</button>
+      <button class="btn sm" onclick="editReq('${id}')">${t('req.edit')}</button>
+    </div>`;
+  $('reqOverlay').classList.add('show');
+};
+window.setStage = async (id, k) => {
+  const r=requests[id]; if (!r || r.stage===k) return;
+  const ch = {stage:k, [`stageLog/${k}`]:new Date().toISOString(), updatedAt:new Date().toISOString()};
+  ch.completedDate = k==='결과발송' ? (r.completedDate || TODAY) : null;
+  if (k==='접수' && !r.receivedDate) ch.receivedDate = TODAY;
+  await guard(()=>update(ref(db, ROOT+'/requests/'+id), ch), `✓ ${stName(k)}`);
+  openReq(id);
+};
+window.deleteReq = async id => {
+  const r=requests[id]; if (!r) return;
+  if (!confirm(t('c.delReq', r.reqNo||'', deptLabel(r)))) return;
+  if (await guard(()=>remove(ref(db, ROOT+'/requests/'+id)), t('t.reqDeleted'))) { closeOv('reqOverlay'); openReqId=null; }
+};
+window.editReq = id => { closeOv('reqOverlay'); loadEditor(requests[id], id); switchTab('register'); window.scrollTo({top:0}); };
+
+/* ═════════════ 목록 ═════════════ */
+function filteredReqs(){
+  const q=$('fText').value.trim().toLowerCase(), fs=$('fStage').value, fc=$('fCompany').value, fp=$('fPeriod').value;
+  const mk=TODAY.slice(0,7), d30=ymd(addDays(today,-30));
+  return reqEntries().filter(([,r]) => {
+    if (fs && r.stage!==fs) return false;
+    if (fc && r.company!==fc) return false;
+    if (fp==='open' && !isOpen(r)) return false;
+    if (fp==='month' && !(r.dueDate||'').startsWith(mk)) return false;
+    if (fp==='last30' && (r.receivedDate||r.reqDate||'') < d30) return false;
+    if (q){ const hay=[r.reqNo,r.company,r.division,r.dept,r.requester,r.po,r.analyst,...(r.samples||[]).flatMap(s=>[s.id,s.mat,s.lot,s.items])].join(' ').toLowerCase(); if (!hay.includes(q)) return false; }
+    return true;
+  }).sort((a,b)=>{ const A=a[1],B=b[1]; return (isOpen(B)-isOpen(A)) || String(A.dueDate||'9999').localeCompare(String(B.dueDate||'9999')); });
+}
+window.renderList = () => {
+  const rows = filteredReqs();
+  const done = rows.map(([,r])=>r).filter(isDone), tats=done.map(tat).filter(x=>x!==null);
+  const ot=done.filter(r=>onTime(r)===true).length, otN=done.filter(r=>onTime(r)!==null).length;
+  $('listStats').innerHTML = [
+    [t('st.req'), rows.length], [t('st.smp'), rows.reduce((a,[,r])=>a+smpCount(r),0)], [t('st.lateOpen'), rows.filter(([,r])=>isLate(r)).length],
+    [t('st.avgTat'), tats.length?t('days',(tats.reduce((a,b)=>a+b,0)/tats.length).toFixed(1)):'-'], [t('st.ontime'), otN?Math.round(ot/otN*100)+'%':'-'],
+  ].map(([l,v])=>`<div class="stat-chip"><span style="color:var(--text3);font-size:11px">${l}</span><span class="stat-val">${v}</span></div>`).join('');
+  $('listBody').innerHTML = rows.length ? rows.map(([id,r]) => {
+    const dd = r.dueDate ? diffDays(r.dueDate) : null;
+    const ddc = isDone(r)?'done':dd===null?'ok':dd<0?'late':dd<=2?'soon':'ok';
+    const ddt = isDone(r)?(onTime(r)===false?t('list.sentLate'):'✓'):dd===null?'-':dd<0?t('mk.lateDays',-dd):`D-${dd}`;
+    const tt=tat(r);
+    return `<tr class="click" onclick="openReq('${id}')">
+      <td class="mono"><b>${escH(r.reqNo||'-')}</b>${isUrgent(r)?` <span class="st urg" style="padding:0 4px;border-radius:3px">${t('mk.urg')}</span>`:''}</td>
+      <td>${escH(deptLabel(r))}</td><td>${escH(mats(r)||'-')}</td><td class="num">${smpCount(r)}</td><td>${escH(items(r)||'-')}</td>
+      <td class="mono">${escH(r.receivedDate||'-')}</td><td class="mono">${escH(r.plannedDate||'-')}</td><td class="mono">${escH(r.dueDate||'-')}</td>
+      <td class="dday ${ddc}">${ddt}</td><td>${stageBadge(r.stage)}</td><td>${escH(r.analyst||'')}</td><td class="num">${tt===null?'':t('days',tt)}</td></tr>`;
+  }).join('') : `<tr><td colspan="12"><div class="empty"><div class="empty-icon">📭</div>${t('list.empty')}</div></td></tr>`;
+};
+window.downloadCSV = () => {
+  const rows = filteredReqs(); if (!rows.length){ showToast(t('t.csvEmpty'), true); return; }
+  const q = v => `"${String(v??'').replace(/"/g,'""')}"`;
+  const out = [t('csv.h').map(q).join(',')];
+  rows.forEach(([,r]) => {
+    const head=[r.reqNo,r.company,r.division,r.dept,r.purTeam,r.requester,r.po,r.priority,r.reqDate,r.receivedDate,r.plannedDate,r.dueDate,r.completedDate,stName(r.stage),r.analyst,r.instrument,tat(r)??'',onTime(r)===null?'':onTime(r)?'Y':'N'];
+    const smp = (r.samples&&r.samples.length) ? r.samples : [{}];
+    smp.forEach(s => out.push([...head, s.id,s.mat,s.lot,s.cont,s.vol,s.qty,s.sdate,s.items,s.pre,s.rmk].map(q).join(',')));
+  });
+  const blob = new Blob(['﻿'+out.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`JNFAM_Analysis_Requests_${TODAY}.csv`; a.click(); URL.revokeObjectURL(a.href);
+  showToast(t('t.csvOk'));
+};
+
+/* ═════════════ 의뢰 등록 편집기 ═════════════ */
+const PRIORITIES = ['Normal (일반)','Urgent (긴급)'];
+const ED = [
+  ['sec','sec.req'],
+  ['reqNo','text',{ph:'ed.reqNoPh'}],['reqDate','date'],['dueDate','date',{req:true}],['priority','select'],
+  ['site'],['requester'],['email'],['phone'],['po'],
+  ['sec','sec.dept'],
+  ['company','text',{list:'dlCompany'}],['division'],['dept'],['purTeam'],['purContact'],['purEmail'],
+  ['sec','sec.trans'],
+  ['delivery'],['shipDate','date'],['storage'],['tracking'],['hazmat'],['after'],['address','text',{wide:true}],
+  ['sec','sec.jnfam'],
+  ['receivedDate','date'],['plannedDate','date'],['stage','select'],
+  ['analyst','text',{list:'dlAnalyst'}],['instrument','text',{list:'dlInst'}],['receivedBy'],
+  ['receivedCond','text',{wide:true}],['memo','text',{wide:true}],
+];
+const ED_KEYS = ED.filter(f=>f[0]!=='sec').map(f=>f[0]);
+$('edGrid').innerHTML = ED.map(f => {
+  if (f[0]==='sec') return `<div class="sec" data-i18n="${f[1]}"></div>`;
+  const [k,type='text',o={}] = f;
+  const ctl = type==='select'
+    ? `<select class="sel" id="ed-${k}">${k==='priority'?PRIORITIES.map(x=>`<option>${x}</option>`).join(''):''}</select>`
+    : `<input class="inp" id="ed-${k}" type="${type}"${o.ph?` data-i18n-ph="${o.ph}"`:''}${o.list?` list="${o.list}"`:''}>`;
+  return `<div${o.wide?' class="wide"':''}><label class="form-label"><span data-i18n="f.${k}"></span>${o.req?' *':''}</label>${ctl}</div>`;
+}).join('');
+$('ed-stage').innerHTML = STAGES.map(s=>`<option value="${s.k}">${s.k}</option>`).join('');
+$('ed-receivedDate').addEventListener('change', autoDates);
+
+let edId = null, edMeta = {}, edSamples = [];
+const setEd = (k,v) => { const el=$('ed-'+k); if (!el) return;
+  if (el.tagName==='SELECT' && v && ![...el.options].some(o=>o.value===v)) el.insertAdjacentHTML('beforeend', `<option>${escH(v)}</option>`);
+  el.value = v ?? ''; el.classList.remove('warn'); };
+const getEd = k => ($('ed-'+k)?.value ?? '').trim();
+
+function autoDates(){
+  const rec = getEd('receivedDate'); if (!rec) return;
+  if (!getEd('dueDate') && +settings.tatDays) setEd('dueDate', addBiz(rec, +settings.tatDays));
+  if (!getEd('plannedDate')) {          // 기본 측정 예정일 = 접수 다음 영업일 (약속일보다 늦으면 약속일)
+    const due=getEd('dueDate'), nxt=addBiz(rec,1);
+    setEd('plannedDate', due && due<nxt ? due : nxt);
+  }
+}
+function edTitleUpdate(){
+  const r = edId ? requests[edId] : null;
+  $('edTitle').textContent = edId ? t('ed.titleEdit', r?.reqNo||'') : edMeta.source==='import' ? t('ed.titleImp') : t('ed.titleNew');
+  $('edSaveBtn').textContent = edId ? t('ed.saveEdit') : t('ed.save');
+  $('edSource').textContent = edMeta.fileName ? `📄 ${edMeta.fileName}` : '';
+}
+window.resetEditor = () => {
+  edId=null; edMeta={}; edSamples=[blankSample()];
+  ED_KEYS.forEach(k=>setEd(k,''));
+  setEd('priority', PRIORITIES[0]); setEd('stage','접수대기');
+  if (list(settings.instruments).length===1) setEd('instrument', list(settings.instruments)[0]);
+  edTitleUpdate(); renderSamples();
+};
+function loadEditor(r, id){
+  resetEditor(); edId=id||null;
+  ED_KEYS.forEach(k => { if (r[k]!==undefined) setEd(k, r[k]); });
+  edMeta = {deptKey:r.deptKey||'', requestedBy:r.requestedBy||'', signDate:r.signDate||'', fileName:r.fileName||'', source:r.source||'manual'};
+  edSamples = (r.samples&&r.samples.length) ? r.samples.map(s=>({...blankSample(), ...s})) : [blankSample()];
+  edTitleUpdate(); renderSamples();
+}
+const SMP_COLS = [['id','text',null],['mat','text','dlMat'],['lot','text',null],['cont','text','dlCont'],['vol','number',null],['qty','number',null],['sdate','date',null],['items','text','dlItems'],['pre','sel',null],['rmk','text',null]];
+const blankSample = () => ({id:'',mat:'',lot:'',cont:'',vol:'',qty:'',sdate:'',items:'',pre:'N',rmk:''});
+function renderSamples(){
+  $('smpBody').innerHTML = edSamples.map((s,i)=>`<tr><td class="muted">${i+1}</td>${SMP_COLS.map(([k,ty,dl])=>
+    ty==='sel' ? `<td><select onchange="smpSet(${i},'${k}',this.value)"><option${s[k]==='N'?' selected':''}>N</option><option${s[k]==='Y'?' selected':''}>Y</option></select></td>`
+    : `<td><input type="${ty}" value="${escH(s[k])}"${dl?` list="${dl}"`:''} oninput="smpSet(${i},'${k}',this.value)"${k==='id'?' style="min-width:110px"':''}></td>`).join('')}
+    <td><button class="icon-btn" style="position:static" onclick="delSampleRow(${i})" title="${t('ed.delRow')}">×</button></td></tr>`).join('');
+  smpTotals();
+}
+function smpTotals(){
+  const v = edSamples.filter(s=>s.id||s.mat||s.lot);
+  $('smpTotals').innerHTML = t('ed.totals', v.length, v.reduce((a,s)=>a+(+s.qty||0),0), v.filter(s=>s.pre==='Y').length, v.reduce((a,s)=>a+(+s.vol||0)*(+s.qty||0),0).toLocaleString());
+}
+window.smpSet = (i,k,v) => { edSamples[i][k]=v; smpTotals(); };
+window.addSampleRow = () => { edSamples.push(blankSample()); renderSamples(); };
+window.delSampleRow = i => { edSamples.splice(i,1); if (!edSamples.length) edSamples.push(blankSample()); renderSamples(); };
+
+function nextReqNo(dateStr){
+  const d = dateStr ? parseD(dateStr) : today;
+  const pre = `AN-${String(d.getFullYear()).slice(2)}${String(d.getMonth()+1).padStart(2,'0')}-`;
+  const n = reqEntries().map(([,r])=>r.reqNo||'').filter(x=>x.startsWith(pre)).map(x=>+x.slice(pre.length)||0);
+  return pre + String((n.length?Math.max(...n):0)+1).padStart(3,'0');
+}
+const findDup = (r, selfId) => reqEntries().find(([id,x]) => id!==selfId && ((r.reqNo && x.reqNo===r.reqNo) || (r.po && x.po===r.po && x.reqDate===r.reqDate && x.requester===r.requester)));
+window.saveRequest = async () => {
+  const r = {}; ED_KEYS.forEach(k => r[k]=getEd(k));
+  r.samples = edSamples.filter(s=>s.id||s.mat||s.lot).map(s=>({...s, id:String(s.id).trim(), vol:s.vol===''?'':+s.vol, qty:s.qty===''?'':+s.qty, pre:s.pre==='Y'?'Y':'N'}));
+  if (!r.dueDate){ $('ed-dueDate').classList.add('warn'); showToast(t('t.needDue'), true); return; }
+  if (r.samples.some(s=>!s.id)){ showToast(t('t.needId'), true); return; }
+  if (!r.samples.length && !confirm(t('c.noSamples'))) return;
+  if (!r.reqNo) r.reqNo = nextReqNo(r.receivedDate || r.reqDate);
+  const dup = findDup(r, edId);
+  if (dup && !confirm(t('c.dup', dup[1].reqNo, deptLabel(dup[1]), dup[1].reqDate||'-'))) return;
+  Object.assign(r, edMeta);
+  r.updatedAt = new Date().toISOString();
+  const prev = edId ? requests[edId] : null;
+  r.completedDate = r.stage==='결과발송' ? (prev?.completedDate || TODAY) : null;
+  const btn=$('edSaveBtn'); btn.disabled=true;
+  const ok = await guard(async () => {
+    if (edId) await update(ref(db, ROOT+'/requests/'+edId), {...r, ...(prev?.stage!==r.stage?{[`stageLog/${r.stage}`]:r.updatedAt}:{})});
+    else await push(reqRef, {...r, createdAt:r.updatedAt, stageLog:{[r.stage]:r.updatedAt}});
+  }, edId ? t('t.reqEdited', r.reqNo) : t('t.reqSaved', r.reqNo));
+  btn.disabled=false;
+  if (ok){
+    const ds=showDate(r)||r.dueDate; resetEditor(); $('parseMsgs').innerHTML='';
+    if (ds){ curYear=+ds.slice(0,4); curMonth=+ds.slice(5,7)-1; }
+    switchTab('calendar');
+  }
+};
+
+/* ═════════════ 의뢰서(.xlsx) 파싱 ═════════════ */
+/*PARSER_START*/
+// 고객 분석 의뢰서(JNFAM_Analysis_Request_Form) 파서
+// 셀 주소를 고정하지 않고 '라벨' 위치를 찾아 그 옆(병합 범위 다음 칸) 값을 읽음 → 행 추가·이동에 강함
+// 경고는 {c: 코드, a: 인자} 형태로 돌려주고 화면에서 언어별 문구로 바꿈
+function parseRequestWorkbook(XLSX, data){
+  const wb = XLSX.read(data, {type:'array'});
+  const sn = wb.SheetNames.find(n=>/request|의뢰/i.test(n)) || wb.SheetNames[0];
+  const ws = wb.Sheets[sn];
+  if (!ws || !ws['!ref']) { const e=new Error('EMPTY'); e.code='EMPTY'; throw e; }
+  const merges = ws['!merges'] || [];
+  const R = XLSX.utils.decode_range(ws['!ref']);
+  const cellAt = (r,c) => ws[XLSX.utils.encode_cell({r,c})];
+  const txt = (r,c) => { const x=cellAt(r,c); if (!x || x.v==null || x.v==='') return ''; return String(typeof x.v==='string' ? x.v : (x.w ?? x.v)).trim(); };
+  const first = s => String(s||'').split(/\r?\n/)[0].trim();
+  const mergeOf = (r,c) => merges.find(m=>r>=m.s.r&&r<=m.e.r&&c>=m.s.c&&c<=m.e.c);
+  const warnings = [];
+  const W = (c,a) => warnings.push({c, a});
+
+  const pad = n => String(n).padStart(2,'0');
+  function dateFromCell(x){
+    if (!x || x.v==null || x.v==='') return '';
+    if (typeof x.v==='number'){
+      if (x.v>20000 && x.v<80000){ const d=XLSX.SSF.parse_date_code(x.v); if (d) return `${d.y}-${pad(d.m)}-${pad(d.d)}`; }
+      return '';
+    }
+    if (x.v instanceof Date) return `${x.v.getFullYear()}-${pad(x.v.getMonth()+1)}-${pad(x.v.getDate())}`;
+    return dateFromText(String(x.v));
+  }
+  function dateFromText(s){
+    s=String(s||'').trim(); let m;
+    if ((m=s.match(/(\d{4})[-./년\s]+(\d{1,2})[-./월\s]+(\d{1,2})/))) return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
+    if ((m=s.match(/^(\d{1,2})[-./](\d{1,2})[-./](\d{4})/))) return `${m[3]}-${pad(m[1])}-${pad(m[2])}`;   // 미국식 M/D/YYYY
+    if ((m=s.match(/^(\d{1,2})[-./](\d{1,2})[-./](\d{2})$/))) return `20${m[3]}-${pad(m[1])}-${pad(m[2])}`;
+    return '';
+  }
+
+  const labels = [];
+  for (let r=R.s.r; r<=R.e.r; r++) for (let c=R.s.c; c<=R.e.c; c++){
+    const x=cellAt(r,c); if (x && typeof x.v==='string' && x.v.trim()) labels.push({r,c,f:first(x.v)});
+  }
+  const findLabel = (re, nth=0) => labels.filter(l=>re.test(l.f))[nth] || null;
+  const valCell = L => { const m=mergeOf(L.r,L.c); return {r:L.r, c:(m?m.e.c:L.c)+1}; };
+  const field = (re, opt={}) => {
+    const L = findLabel(re, opt.nth||0); if (!L) return '';
+    const p = valCell(L), x = cellAt(p.r,p.c);
+    let v = opt.date ? dateFromCell(x) : txt(p.r,p.c);
+    if (!opt.date && v && labels.some(l=>l.r===p.r&&l.c===p.c) && /\n/.test(String(x.v))) v = '';
+    if (/미등록|#N\/A|#REF/i.test(v)) v = '';
+    return v;
+  };
+
+  if (!findLabel(/^Sample ID/i) && !findLabel(/^Request Date/i)) { const e=new Error('NOT_FORM'); e.code='NOT_FORM'; throw e; }
+
+  const f = {
+    reqNo:      field(/^Request No/i),
+    reqDate:    field(/^Request Date$/i, {date:true}),
+    dueDate:    field(/^Requested Due Date/i, {date:true}),
+    site:       field(/^Site/i),
+    priority:   field(/^Priority$/i) || field(/^Priority$/i, {nth:1}),
+    requester:  field(/^Requester$/i),
+    po:         field(/^Customer PO/i),
+    email:      field(/^E-?mail$/i),
+    phone:      field(/^Phone/i),
+    deptKey:    field(/^Select Dept/i),
+    company:    field(/^Company$/i),
+    dept:       field(/^Department$/i),
+    purTeam:    field(/^Purchasing Team/i),
+    purContact: field(/^Purchasing Contact/i),
+    purEmail:   field(/^Purchasing E-?mail/i),
+    delivery:   field(/^Delivery Method/i),
+    shipDate:   field(/^Pickup\s*\/\s*Ship Date/i, {date:true}),
+    storage:    field(/^Storage Condition/i),
+    tracking:   field(/^Tracking No/i),
+    address:    field(/^Pickup Address/i),
+    hazmat:     field(/^Hazmat/i),
+    after:      field(/^After Analysis/i),
+    requestedBy:field(/^Requested by/i),
+    receivedBy: field(/^Received by/i),
+    signDate:   field(/^Date$/i, {date:true}),
+    receivedCond: field(/^Received Date/i),
+    division:   '',
+  };
+
+  // 요청 부서: 'Dept Master' 시트에서 직접 조회 (수식 캐시가 없어도 동작, 공정(Division)도 여기서)
+  const dm = wb.Sheets[wb.SheetNames.find(n=>/dept\s*master/i.test(n))];
+  if (f.deptKey && dm && dm['!ref']){
+    const rows = XLSX.utils.sheet_to_json(dm, {header:1, defval:''});
+    // A열(Key)은 수식이라 캐시가 없을 수 있음 → B/C/D(회사/공정/부서)로 키를 다시 만들어 비교
+    const norm = s => String(s??'').replace(/\s+/g,' ').trim().toLowerCase();
+    const hit = rows.slice(1).find(row => norm(row[0])===norm(f.deptKey) || (row[1] && norm(`${row[1]} / ${row[2]} / ${row[3]}`)===norm(f.deptKey)));
+    if (hit){
+      const g = i => String(hit[i]??'').trim();
+      f.company ||= g(1); f.division = g(2); f.dept ||= g(3); f.purTeam ||= g(4); f.purContact ||= g(5); f.purEmail ||= g(6);
+    } else W('deptMissing', [f.deptKey]);
+  }
+  if (!f.deptKey && !f.company) W('noDept', []);
+
+  const samples = [];
+  const H = findLabel(/^Sample ID/i);
+  if (H){
+    const map = {}, keys = [['no',/^No\.?$/i],['id',/^Sample ID/i],['mat',/^Material/i],['lot',/^Lot/i],['cont',/^Container/i],['vol',/^Volume/i],['qty',/^Qty/i],['sdate',/^Sampling Date/i],['items',/^Analysis Items/i],['pre',/^Pre-?treat/i],['rmk',/^Remarks/i]];
+    for (let c=R.s.c; c<=R.e.c; c++){ const h=first(txt(H.r,c)); const k=keys.find(([,re])=>re.test(h)); if (k && map[k[0]]===undefined) map[k[0]]=c; }
+    for (let r=H.r+1; r<=R.e.r; r++){
+      const a = txt(r, map.no ?? 0);
+      if (/^\d+\.\s/.test(a)) break;                // 다음 섹션 ("4. SAMPLE COUNT")
+      if (/^ex$/i.test(a)) continue;                // 예시 행 제외
+      const g = k => map[k]===undefined ? '' : txt(r, map[k]);
+      const s = {id:g('id'), mat:g('mat'), lot:g('lot'), cont:g('cont'), vol:'', qty:'', sdate:'', items:g('items'), pre:'', rmk:g('rmk')};
+      if (!s.id && !s.mat && !s.lot) continue;
+      const num = k => { const v=map[k]===undefined?null:cellAt(r,map[k])?.v; const n=typeof v==='number'?v:parseFloat(String(v??'').replace(/,/g,'')); return isNaN(n)?'':n; };
+      s.vol=num('vol'); s.qty=num('qty');
+      s.sdate = map.sdate===undefined ? '' : dateFromCell(cellAt(r,map.sdate));
+      const p = g('pre').toUpperCase(); s.pre = /^(Y|YES|O|예)$/.test(p) ? 'Y' : 'N';
+      if (!s.id) W('noId', [a||r+1]);
+      if (!s.items) W('noItems', [s.id||a]);
+      samples.push(s);
+    }
+  }
+  if (!samples.length) W('noSamples', []);
+  if (!f.dueDate) W('noDue', []);
+  if (f.reqDate && f.dueDate && f.dueDate < f.reqDate) W('dueBeforeReq', []);
+  const ids = samples.map(s=>s.id).filter(Boolean), dupIds = ids.filter((x,i)=>ids.indexOf(x)!==i);
+  if (dupIds.length) W('dupIds', [[...new Set(dupIds)].join(', ')]);
+  return {sheet:sn, fields:f, samples, warnings};
+}
+/*PARSER_END*/
+
+const dz = $('dropZone');
+['dragenter','dragover'].forEach(e=>dz.addEventListener(e, ev=>{ev.preventDefault(); dz.classList.add('over');}));
+['dragleave','drop'].forEach(e=>dz.addEventListener(e, ev=>{ev.preventDefault(); dz.classList.remove('over');}));
+dz.addEventListener('drop', ev => { const f=ev.dataTransfer.files[0]; if (f) onFile(f); });
+
+window.onFile = async file => {
+  if (!file) return;
+  const msgs=$('parseMsgs'); msgs.innerHTML = `<div class="msg">${t('imp.reading', escH(file.name))}</div>`;
+  if (!window.XLSX){ msgs.innerHTML=`<div class="msg err">${t('imp.noLib')}</div>`; return; }
+  try {
+    const res = parseRequestWorkbook(window.XLSX, new Uint8Array(await file.arrayBuffer()));
+    const f = res.fields;
+    const r = {...f, samples:res.samples, source:'import', fileName:file.name, stage:'접수대기', priority: f.priority || PRIORITIES[0]};
+    if (r.priority && !PRIORITIES.includes(r.priority)) r.priority = /urgent|긴급/i.test(r.priority) ? PRIORITIES[1] : PRIORITIES[0];
+    if (list(settings.instruments).length===1) r.instrument = list(settings.instruments)[0];
+    loadEditor(r, null);   // 고객 Request No. 칸은 JNFAM 사용 칸 → 비어 있으면 저장 시 자동 채번
+    const warn = res.warnings.map(w => t('w.'+w.c, ...w.a.map(String)));
+    const dup = findDup(r, null);
+    if (dup) warn.unshift(t('imp.dupReq', dup[1].reqNo, deptLabel(dup[1]), dup[1].reqDate||'-'));
+    msgs.innerHTML = `<div class="msg ok">${t('imp.ok', escH(file.name), res.samples.length, escH([f.company,f.division,f.dept].filter(Boolean).join(' · ')||t('imp.noDeptShort')), escH(f.dueDate||t('imp.none')))}</div>` +
+      warn.map(w=>`<div class="msg warn">⚠️ ${escH(w)}</div>`).join('');
+    if (!f.dueDate) $('ed-dueDate').classList.add('warn');
+    $('ed-receivedDate').focus();
+  } catch(e){
+    msgs.innerHTML = `<div class="msg err">❌ ${escH(file.name)}: ${escH(e.code ? t('e.'+e.code) : e.message)}</div>`;
+  }
+};
+
+/* ═════════════ 정기 업무 화면 ═════════════ */
+function cycleText(p){
+  const iv=Math.max(1,+p.interval||1);
+  if (p.freq==='monthly'){ const d = p.mday==='last' ? t('pt.last') : t('pt.dayN', p.mday); return iv===1 ? t('pt.cycM', d) : t('pt.cycMn', iv, d); }
+  const ds=[1,2,3,4,5,6,0].filter(x=>(p.days||[]).map(Number).includes(x)).map(x=>DOW()[x]).join('·')||'-';
+  return iv===1 ? t('pt.cycW', ds) : t('pt.cycWn', iv, ds);
+}
+function nextOccs(p, n){
+  const res=[]; let from=TODAY;
+  for (let g=0; g<12&&res.length<n; g++){
+    const to=ymd(addDays(parseD(from),120));
+    patternOccs(p,from,to).forEach(o=>{ if (res.length<n && !(p.skip&&p.skip[o])) res.push(o); });
+    from=ymd(addDays(parseD(to),1));
+  }
+  return res;
+}
+window.renderPatterns = () => {
+  const L = Object.entries(patterns).filter(([,p])=>p).sort((a,b)=>(CATS.indexOf(CAT(a[1].category))-CATS.indexOf(CAT(b[1].category)))||String(a[1].text).localeCompare(String(b[1].text)));
+  $('patternBody').innerHTML = L.length ? L.map(([id,p]) => { const nx=p.active===false?[]:nextOccs(p,1);
+    return `<tr class="${p.active===false?'off':''}">
+      <td><input type="checkbox" ${p.active!==false?'checked':''} onchange="togglePattern('${id}',this.checked)"></td>
+      <td><b>${escH(p.text)}</b>${p.memo?`<div class="note">${escH(p.memo)}</div>`:''}</td><td>${catBadge(p.category)}</td>
+      <td style="white-space:nowrap">${escH(cycleText(p))}</td><td>${escH(p.worker||'')}</td>
+      <td style="white-space:nowrap" class="mono">${p.start} ~ ${p.end||t('pt.ongoing')}</td><td class="mono">${nx.length?fmtMD(nx[0]):'-'}</td>
+      <td style="text-align:right;white-space:nowrap"><button class="btn ghost sm" onclick="openPatternForm('${id}')">${t('btn.edit')}</button> <button class="btn danger sm" onclick="deletePattern('${id}')">${t('btn.del')}</button></td></tr>`; }).join('')
+    : `<tr><td colspan="8"><div class="empty"><div class="empty-icon">🔁</div>${t('pt.empty')}</div></td></tr>`;
+};
+window.ptFreqUI = () => {
+  const m=$('pt-freq').value==='monthly';
+  $('pt-weekly-row').style.display=m?'none':''; $('pt-monthly-row').style.display=m?'':'none';
+  const s=$('pt-interval'), cur=s.value||'1';
+  s.innerHTML=[1,2,3,4].map(n=>`<option value="${n}">${n===1?t(m?'pt.everyM':'pt.every'):t(m?'pt.nM':'pt.nW', n)}</option>`).join(''); s.value=cur;
+};
+function readPatternForm(){
+  return { text:$('pt-text').value.trim(), category:$('pt-cat').value, worker:$('pt-worker').value.trim(), memo:$('pt-memo').value.trim(),
+    freq:$('pt-freq').value, interval:+$('pt-interval').value, days:[...document.querySelectorAll('#pt-days input:checked')].map(i=>+i.value),
+    mday:(v=>v==='last'?'last':+v)($('pt-mday').value), start:$('pt-start').value, end:$('pt-end').value||'' };
+}
+window.ptPreview = () => {
+  const p=readPatternForm(), el=$('pt-preview');
+  if (!p.start||(p.freq==='weekly'&&!p.days.length)){ el.innerHTML=t('pt.pvHint'); return; }
+  const id=$('pt-id').value; if (id&&patterns[id]) p.skip=patterns[id].skip;
+  const nx=nextOccs(p,6); el.innerHTML=`<b>${escH(cycleText(p))}</b> · ${t('pt.pvNext')}: `+(nx.length?nx.map(fmtMD).join(', '):t('pt.pvNone'));
+};
+window.openPatternForm = id => {
+  const p=(id&&patterns[id])||{freq:'weekly',interval:1,days:[],mday:1,start:TODAY,end:'',category:'정기분석'};
+  $('ptFormTitle').textContent=id?t('pt.editT'):t('pt.addT'); $('pt-id').value=id||'';
+  $('pt-text').value=p.text||''; $('pt-cat').innerHTML=catOptions(CAT(p.category).k); $('pt-worker').value=p.worker||''; $('pt-memo').value=p.memo||'';
+  $('pt-freq').value=p.freq||'weekly'; ptFreqUI(); $('pt-interval').value=String(p.interval||1);
+  document.querySelectorAll('#pt-days input').forEach(i=>i.checked=(p.days||[]).map(Number).includes(+i.value));
+  $('pt-mday').value=String(p.mday||1); $('pt-start').value=p.start||TODAY; $('pt-end').value=p.end||'';
+  ptPreview(); $('patternOverlay').classList.add('show');
+};
+window.savePattern = async () => {
+  const p=readPatternForm(), id=$('pt-id').value;
+  if (!p.text) return showToast(t('t.ptText'), true);
+  if (!p.start) return showToast(t('t.ptStart'), true);
+  if (p.freq==='weekly'&&!p.days.length) return showToast(t('t.ptDow'), true);
+  if (p.end&&p.end<p.start) return showToast(t('t.ptEnd'), true);
+  if (p.freq==='weekly') p.mday=null; else p.days=null;
+  $('ptSaveBtn').disabled=true;
+  const ok = await guard(()=> id ? update(ref(db, ROOT+'/patterns/'+id), {...p, updatedAt:new Date().toISOString()}) : push(patRef, {...p, active:true, createdAt:new Date().toISOString()}), id?t('t.ptEdited'):t('t.ptAdded'));
+  $('ptSaveBtn').disabled=false; if (ok) closeOv('patternOverlay');
+};
+window.togglePattern = (id,on) => guard(()=>update(ref(db, ROOT+'/patterns/'+id), {active:on}), on?t('t.ptOn'):t('t.ptOff'));
+window.deletePattern = async id => {
+  const p=patterns[id]; if (!p) return;
+  if (!confirm(t('c.delPt', p.text))) return;
+  await guard(()=>remove(ref(db, ROOT+'/patterns/'+id)), t('t.ptDeleted'));
+};
+
+/* ═════════════ 설정 ═════════════ */
+function loadSettingsForm(){
+  $('setCap').value = settings.capacity ?? ''; $('setTat').value = settings.tatDays ?? '';
+  $('setAnalysts').value = settings.analysts||''; $('setInst').value = settings.instruments||'';
+}
+window.saveSettings = () => guard(()=>set(setRef, {
+  capacity: Math.max(1, +$('setCap').value||20), tatDays: Math.max(0, +$('setTat').value||0),
+  analysts: list($('setAnalysts').value).join(', '), instruments: list($('setInst').value).join(', '),
+}), t('t.setSaved'));
+
+/* ── 시작 ── */
+loadSettingsForm();
+resetEditor();
+setSync('wait');
+setLang(lang);
+</script>
+</body>
+</html>
