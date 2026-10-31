@@ -213,6 +213,21 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
 .preview{margin-top:10px;font-size:12px;color:var(--text2);background:var(--surface2);border:1px dashed var(--border2);border-radius:8px;padding:9px 12px;line-height:1.7;}
 .preview b{color:var(--accent);}
 .note{font-size:11.5px;color:var(--text3);line-height:1.7;}
+/* BILLING */
+.grp{padding:16px 18px;}
+.grp-h{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+.grp-h.warn{font-size:12.5px;font-weight:700;color:#92400e;background:var(--yellow-l);border:1px solid #fde68a;border-radius:8px;padding:8px 12px;}
+.grp-co{font-size:14px;font-weight:800;}.grp-team{font-weight:600;color:var(--accent);margin-left:6px;font-size:13px;}
+.grp-ct{font-size:12px;color:var(--text2);margin-top:3px;}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+.pill.ok{background:var(--green-l);color:#166534;}.pill.warn{background:var(--yellow-l);color:#92400e;}.pill.grey{background:var(--surface2);color:var(--text3);}.pill.lock{background:#ede9fe;color:#5b21b6;}
+.tbl tr.lockedrow td{color:var(--text3);background:#fafafc;}.tbl tr.voidrow td{color:var(--text3);text-decoration:line-through;}.tbl tr.voidrow td:last-child{text-decoration:none;}
+.tbl tr.warnrow td{background:#fffbeb;}
+.bill-sel{padding:4px 6px;font-size:11.5px;min-width:200px;}.bill-sel.warn{border-color:#f59e0b;background:#fffbeb;}
+.cell{width:100%;border:1px solid var(--border);border-radius:5px;padding:5px 6px;font-size:12px;font-family:'Noto Sans KR',sans-serif;background:var(--white);min-width:70px;}
+.cell:focus{outline:none;border-color:var(--accent);}.cell.num{text-align:right;font-family:'IBM Plex Mono',monospace;}
+.inv-total{font-size:14px;color:var(--text2);}.inv-total b{font-family:'IBM Plex Mono',monospace;font-size:18px;color:var(--text);margin-left:8px;}
+.tbl a{color:var(--accent);text-decoration:none;font-weight:700;}
 .pattern-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-l);border:1px solid #ddd6fe;border-radius:4px;padding:1px 6px;}
 tr.off td{opacity:.45;}
 
@@ -264,6 +279,7 @@ tr.off td{opacity:.45;}
   <button class="tab" data-tab="list" onclick="switchTab('list')" data-i18n="tab.list"></button>
   <button class="tab" data-tab="register" onclick="switchTab('register')" data-i18n="tab.register"></button>
   <button class="tab" data-tab="pattern" onclick="switchTab('pattern')" data-i18n="tab.pattern"></button>
+  <button class="tab" data-tab="billing" onclick="switchTab('billing')" data-i18n="tab.billing"></button>
   <button class="tab" data-tab="settings" onclick="switchTab('settings')" data-i18n="tab.settings"></button>
 </div>
 
@@ -347,7 +363,7 @@ tr.off td{opacity:.45;}
       <div class="sec-h" style="margin-top:20px;color:var(--accent)" data-i18n="sec.smp"></div>
       <div class="tbl-wrap" style="box-shadow:none">
         <table class="tbl mini smp-tbl">
-          <thead><tr><th>#</th><th><span data-i18n="s.id"></span> *</th><th data-i18n="s.mat"></th><th data-i18n="s.lot"></th><th data-i18n="s.cont"></th><th data-i18n="s.vol"></th><th data-i18n="s.qty"></th><th data-i18n="s.sdate"></th><th data-i18n="s.items"></th><th data-i18n="s.pre"></th><th data-i18n="s.rmk"></th><th></th></tr></thead>
+          <thead><tr><th>#</th><th><span data-i18n="s.id"></span> *</th><th data-i18n="s.mat"></th><th data-i18n="s.lot"></th><th data-i18n="s.cont"></th><th data-i18n="s.vol"></th><th data-i18n="s.qty"></th><th data-i18n="s.sdate"></th><th data-i18n="s.items"></th><th data-i18n="s.pre"></th><th data-i18n="s.rmk"></th><th data-i18n="s.bill"></th><th></th></tr></thead>
           <tbody id="smpBody"></tbody>
         </table>
       </div>
@@ -386,6 +402,86 @@ tr.off td{opacity:.45;}
       </div>
     </div>
     <div class="note" style="padding:0 4px" data-i18n-html="pt.notes"></div>
+  </div>
+
+  <!-- ═════ BILLING ═════ -->
+  <div id="tab-billing" style="display:none">
+    <div class="filter-row">
+      <div class="seg" id="blSeg">
+        <button data-v="cand" onclick="setBlView('cand')" data-i18n="bl.vCand"></button>
+        <button data-v="inv" onclick="setBlView('inv')" data-i18n="bl.vInv"></button>
+        <button data-v="price" onclick="setBlView('price')" data-i18n="bl.vPrice"></button>
+        <button data-v="ct" onclick="setBlView('ct')" data-i18n="bl.vCt"></button>
+        <button data-v="set" onclick="setBlView('set')" data-i18n="bl.vSet"></button>
+      </div>
+    </div>
+
+    <div id="bl-cand">
+      <div class="filter-row">
+        <span class="note" data-i18n="bl.period"></span>
+        <input class="inp" type="date" id="blFrom" onchange="renderBilling()"> ~ <input class="inp" type="date" id="blTo" onchange="renderBilling()">
+        <button class="btn ghost sm" onclick="blPeriod('last')" data-i18n="bl.lastM"></button>
+        <button class="btn ghost sm" onclick="blPeriod('this')" data-i18n="bl.thisM"></button>
+        <span class="note" data-i18n="bl.basis"></span>
+        <select class="sel" id="blBasis" onchange="renderBilling()"><option value="sent" data-i18n="bl.bSent"></option><option value="received" data-i18n="bl.bRec"></option><option value="due" data-i18n="bl.bDue"></option></select>
+        <select class="sel" id="blCo" onchange="renderBilling()"></select>
+        <label class="note" style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="blShowBilled" onchange="renderBilling()"><span data-i18n="bl.showBilled"></span></label>
+      </div>
+      <div class="stats-row" id="blStats" style="margin-bottom:12px"></div>
+      <div id="blGroups"></div>
+    </div>
+
+    <div id="bl-inv" style="display:none">
+      <div class="filter-row">
+        <input class="inp" id="ilText" data-i18n-ph="il.search" oninput="renderInvList()" style="min-width:240px">
+        <select class="sel" id="ilStatus" onchange="renderInvList()"><option value="" data-i18n="il.all"></option><option value="issued" data-i18n="is.issued"></option><option value="paid" data-i18n="is.paid"></option><option value="void" data-i18n="is.void"></option></select>
+        <span class="sp"></span><div class="stats-row" id="ilStats"></div>
+      </div>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr>
+        <th data-i18n="il.no"></th><th data-i18n="il.date"></th><th data-i18n="il.billTo"></th><th>PO</th><th data-i18n="bl.period"></th><th class="num" data-i18n="il.smp"></th><th class="num" data-i18n="il.amt"></th><th data-i18n="il.status"></th><th></th>
+      </tr></thead><tbody id="ilBody"></tbody></table></div>
+    </div>
+
+    <div id="bl-price" style="display:none">
+      <div class="panel" style="padding:16px 18px">
+        <p class="desc" data-i18n-html="pr.desc"></p>
+        <div class="tbl-wrap" style="box-shadow:none"><table class="tbl mini"><thead><tr>
+          <th data-i18n="pr.co"></th><th data-i18n="pr.mat"></th><th data-i18n="pr.item"></th><th data-i18n="pr.per"></th><th data-i18n="pr.price"></th><th data-i18n="pr.note"></th><th></th>
+        </tr></thead><tbody id="prBody"></tbody></table></div>
+        <div class="note" style="margin-top:8px" data-i18n="bs.pre"></div>
+      </div>
+    </div>
+
+    <div id="bl-ct" style="display:none">
+      <div class="panel" style="padding:16px 18px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+          <p class="desc" style="flex:1;min-width:280px" data-i18n-html="ct.desc"></p>
+          <button class="btn ghost sm" onclick="collectContacts()" data-i18n="ct.fromReq"></button>
+        </div>
+        <div class="tbl-wrap" style="box-shadow:none"><table class="tbl mini"><thead><tr>
+          <th data-i18n="ct.co"></th><th data-i18n="ct.div"></th><th data-i18n="ct.dept"></th><th data-i18n="ct.team"></th><th data-i18n="ct.name"></th><th data-i18n="ct.email"></th><th data-i18n="ct.note"></th><th class="num" data-i18n="ct.used"></th><th></th>
+        </tr></thead><tbody id="ctBody"></tbody></table></div>
+      </div>
+    </div>
+
+    <div id="bl-set" style="display:none">
+      <div class="panel" style="max-width:720px">
+        <div class="grid3" style="grid-template-columns:1fr 1fr">
+          <div><label class="form-label" data-i18n="bs.prefix"></label><input class="inp mono" id="bsPrefix"><div class="note" data-i18n="bs.prefixNote"></div></div>
+          <div><label class="form-label" data-i18n="bs.terms"></label><input class="inp" type="number" min="0" id="bsTerms"></div>
+          <div><label class="form-label" data-i18n="bs.pre"></label><input class="inp" type="number" min="0" step="0.01" id="bsPre"></div>
+          <div><label class="form-label" data-i18n="bs.urg"></label><input class="inp" type="number" min="0" step="0.1" id="bsUrg"></div>
+          <div class="wide"><label class="note" style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text2);font-weight:700"><input type="checkbox" id="bsByPo"><span data-i18n="bs.byPo"></span></label></div>
+          <div><label class="form-label" data-i18n="bs.seller"></label><input class="inp" id="bsSeller"></div>
+          <div><label class="form-label" data-i18n="bs.phone"></label><input class="inp" id="bsPhone"></div>
+          <div class="wide"><label class="form-label" data-i18n="bs.addr"></label><textarea class="inp" id="bsAddr" rows="2"></textarea></div>
+          <div><label class="form-label" data-i18n="bs.email"></label><input class="inp" id="bsEmail"></div>
+          <div></div>
+          <div class="wide"><label class="form-label" data-i18n="bs.remit"></label><textarea class="inp" id="bsRemit" rows="3"></textarea></div>
+        </div>
+        <div class="btn-row"><button class="btn" onclick="saveBset()" data-i18n="bs.save"></button></div>
+      </div>
+    </div>
   </div>
 
   <!-- ═════ SETTINGS ═════ -->
@@ -471,6 +567,15 @@ tr.off td{opacity:.45;}
   </div>
 </div>
 
+<!-- INVOICE DRAFT MODAL -->
+<div class="overlay" id="invOverlay" onclick="if(event.target===this)closeOv('invOverlay')">
+  <div class="modal wide">
+    <div class="modal-header"><div><div class="modal-title" id="invTitle"></div><div class="modal-sub" id="invSub"></div></div>
+      <button class="modal-close" onclick="closeOv('invOverlay')">×</button></div>
+    <div class="modal-body" id="invBody"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -540,7 +645,7 @@ const I18N = {
   'set.title':['⚙ 설정','⚙ Settings'],'set.desc':['모든 사용자에게 공통 적용됩니다.','Applies to all users.'],'set.cap':['하루 측정 용량 (샘플 수)','Daily run capacity (samples)'],
   'set.tat':['결과 약속일 기본값 (접수일 + 영업일)','Default due date (received + business days)'],'set.tatPh':['의뢰서에 결과 요청일이 없을 때','Used when the form has no due date'],
   'set.analysts':['담당 분석자 (쉼표로 구분)','Analysts (comma-separated)'],'set.analystsPh':['예: 홍길동, Kim','e.g. Hong, Kim'],'set.inst':['장비 (쉼표로 구분)','Instruments (comma-separated)'],'set.save':['설정 저장','Save settings'],
-  'set.db':['데이터 저장 위치: Firebase <code>{0}</code> 프로젝트의 <code>/{1}/</code> 경로 (requests · tasks · patterns · settings)','Data location: Firebase project <code>{0}</code>, path <code>/{1}/</code> (requests · tasks · patterns · settings)'],
+  'set.db':['데이터 저장 위치: Firebase <code>{0}</code> 프로젝트의 <code>/{1}/</code> 경로 (requests · tasks · patterns · settings · billing · invoices · contacts · prices)','Data location: Firebase project <code>{0}</code>, path <code>/{1}/</code> (requests · tasks · patterns · settings · billing · invoices · contacts · prices)'],
   't.saveFail':['저장 실패: {0} (Firebase 규칙에 {1} 경로 허용 필요)','Save failed: {0} (Firebase rules must allow the {1} path)'],
   't.readFail':['{0} 읽기 오류: {1} (Firebase 규칙에 {2} 경로 허용 필요)','Read error ({0}): {1} (Firebase rules must allow the {2} path)'],
   'r.requests':['의뢰','requests'],'r.tasks':['업무','work items'],'r.patterns':['정기 업무','routine work'],'r.settings':['설정','settings'],
@@ -570,7 +675,7 @@ function applyStatic(){
 
 /* ── Firebase 설정은 firebase-config.js에서 읽음 (별도 파일) ── */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, push, update, remove, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, push, update, remove, set, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 let CFG;
 try { CFG = await import('./firebase-config.js'); }
 catch(e){ applyStatic(); const b=document.getElementById('banner'); b.innerHTML=t('cfg.fail', e.message); b.classList.add('show'); throw e; }
@@ -791,9 +896,10 @@ const rerender = () => {
   if ($('tab-list').style.display!=='none') renderList();
   if ($('tab-pattern').style.display!=='none') renderPatterns();
   fillDatalists();
+  if ($('tab-billing').style.display!=='none' && typeof renderBilling==='function') renderBilling();
 };
 const onErr = what => e => { setSync('off'); showToast(t('t.readFail', t('r.'+what), e.message, ROOT), true); };
-onValue(reqRef, s => { requests=s.val()||{}; setSync('on'); rerender(); }, onErr('requests'));
+onValue(reqRef, s => { requests=s.val()||{}; setSync('on'); rerender(); if (typeof ensureUids==='function') ensureUids(); if (typeof rerenderBill==='function') rerenderBill(); }, onErr('requests'));
 onValue(taskRef, s => { tasks=s.val()||{}; rerender(); }, onErr('tasks'));
 onValue(patRef, s => { patterns=s.val()||{}; rerender(); }, onErr('patterns'));
 onValue(setRef, s => { settings={...settings, ...(s.val()||{})}; loadSettingsForm(); rerender(); }, onErr('settings'));
@@ -805,6 +911,8 @@ function fillDatalists(){
   $('dlCompany').innerHTML = cos.map(c=>`<option>${escH(c)}</option>`).join('');
   const fc=$('fCompany'), cur=fc.value;
   fc.innerHTML = `<option value="">${t('list.allCo')}</option>` + cos.map(c=>`<option${c===cur?' selected':''}>${escH(c)}</option>`).join('');
+  const bc=$('blCo'), bcur=bc.value;
+  bc.innerHTML = `<option value="">${t('bl.allCo')}</option>` + cos.map(c=>`<option${c===bcur?' selected':''}>${escH(c)}</option>`).join('');
   const fs=$('fStage'), cs=fs.value;
   fs.innerHTML = `<option value="">${t('list.allStages')}</option>` + STAGES.map(s=>`<option value="${s.k}"${s.k===cs?' selected':''}>${escH(stName(s.k))}</option>`).join('');
 }
@@ -830,15 +938,17 @@ window.setLang = l => {
   rerender();
   if ($('reqOverlay').classList.contains('show') && openReqId) openReq(openReqId);
   if ($('dayOverlay').classList.contains('show') && openDayDs) openDay(openDayDs);
+  if ($('invOverlay').classList.contains('show') && typeof renderDraft==='function') renderDraft();
 };
 
 /* ── 탭 ── */
 window.switchTab = name => {
-  ['calendar','list','register','pattern','settings'].forEach(x => $('tab-'+x).style.display = x===name?'block':'none');
+  ['calendar','list','register','pattern','billing','settings'].forEach(x => $('tab-'+x).style.display = x===name?'block':'none');
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab===name));
   if (name==='list') renderList();
   if (name==='pattern') renderPatterns();
   if (name==='calendar') renderCalendar();
+  if (name==='billing') renderBilling();
 };
 window.changeMonth = d => { curMonth+=d; if(curMonth>11){curMonth=0;curYear++;} if(curMonth<0){curMonth=11;curYear--;} renderCalendar(); };
 window.goToday = () => { curYear=today.getFullYear(); curMonth=today.getMonth(); renderCalendar(); };
@@ -1015,8 +1125,10 @@ window.openReq = (id, ev) => {
     <div class="sec-h">${t('sec.dept')}</div>
     ${kv([['company',r.company],['division',r.division],['dept',r.dept],['purTeam',r.purTeam],['purContact',r.purContact],['purEmail',r.purEmail]])}
     <div class="sec-h">${t('smp.sum', smp.length, smp.reduce((a,s)=>a+(+s.qty||0),0), smp.filter(s=>s.pre==='Y').length)}</div>
-    <div class="tbl-wrap" style="box-shadow:none"><table class="tbl mini"><thead><tr><th>#</th>${['id','mat','lot','cont','vol','qty','sdate','items','pre','rmk'].map(k=>`<th${k==='vol'||k==='qty'?' class="num"':''}>${t('s.'+k)}</th>`).join('')}</tr></thead>
-      <tbody>${smp.length?smp.map((s,i)=>`<tr><td class="muted">${i+1}</td><td><b>${escH(s.id)}</b></td><td>${escH(s.mat)}</td><td class="mono">${escH(s.lot)}</td><td>${escH(s.cont)}</td><td class="num">${escH(s.vol)}</td><td class="num">${escH(s.qty)}</td><td>${escH(s.sdate)}</td><td>${escH(s.items)}</td><td>${escH(s.pre)}</td><td>${escH(s.rmk)}</td></tr>`).join(''):`<tr><td colspan="11" class="muted">${t('smp.none')}</td></tr>`}</tbody></table></div>
+    <div class="tbl-wrap" style="box-shadow:none"><table class="tbl mini"><thead><tr><th>#</th>${['id','mat','lot','cont','vol','qty','sdate','items','pre','rmk','bill','inv'].map(k=>`<th${k==='vol'||k==='qty'?' class="num"':''}>${t('s.'+k)}</th>`).join('')}</tr></thead>
+      <tbody>${smp.length?smp.map((s,i)=>{ const b=billOf(r,s), inv=lockOf(id,s); return `<tr><td class="muted">${i+1}</td><td><b>${escH(s.id)}</b></td><td>${escH(s.mat)}</td><td class="mono">${escH(s.lot)}</td><td>${escH(s.cont)}</td><td class="num">${escH(s.vol)}</td><td class="num">${escH(s.qty)}</td><td>${escH(s.sdate)}</td><td>${escH(s.items)}</td><td>${escH(s.pre)}</td><td>${escH(s.rmk)}</td>
+        <td>${b.missing?`<span class="pill warn">${t('bl.ctMissing')}</span>`:b.email?`${escH(ctLabel(b))}${s.billKey?'':' <span class="note">('+t('ct.dept')+')</span>'}`:`<span class="pill warn">${t('bl.st.noContact')}</span>`}</td>
+        <td>${inv?`<span class="pill lock">🔒 ${escH(inv)}</span>`:''}</td></tr>`; }).join(''):`<tr><td colspan="13" class="muted">${t('smp.none')}</td></tr>`}</tbody></table></div>
     <div class="sec-h">${t('sec.trans')}</div>
     ${kv([['delivery',r.delivery],['shipDate',r.shipDate],['storage',r.storage],['tracking',r.tracking],['address',r.address],['hazmat',r.hazmat],['after',r.after]])}
     <div class="btn-row" style="justify-content:space-between">
@@ -1035,6 +1147,8 @@ window.setStage = async (id, k) => {
 };
 window.deleteReq = async id => {
   const r=requests[id]; if (!r) return;
+  const invs = [...new Set((r.samples||[]).map(s=>lockOf(id,s)).filter(Boolean))];
+  if (invs.length){ alert(t('c.lockedDel', invs.join(', '))); return; }
   if (!confirm(t('c.delReq', r.reqNo||'', deptLabel(r)))) return;
   if (await guard(()=>remove(ref(db, ROOT+'/requests/'+id)), t('t.reqDeleted'))) { closeOv('reqOverlay'); openReqId=null; }
 };
@@ -1114,6 +1228,7 @@ $('edGrid').innerHTML = ED.map(f => {
 }).join('');
 $('ed-stage').innerHTML = STAGES.map(s=>`<option value="${s.k}">${s.k}</option>`).join('');
 $('ed-receivedDate').addEventListener('change', autoDates);
+['company','division','dept','purTeam','purContact','purEmail'].forEach(k => $('ed-'+k).addEventListener('change', () => renderSamples()));
 
 let edId = null, edMeta = {}, edSamples = [];
 const setEd = (k,v) => { const el=$('ed-'+k); if (!el) return;
@@ -1150,11 +1265,13 @@ function loadEditor(r, id){
   edTitleUpdate(); renderSamples();
 }
 const SMP_COLS = [['id','text',null],['mat','text','dlMat'],['lot','text',null],['cont','text','dlCont'],['vol','number',null],['qty','number',null],['sdate','date',null],['items','text','dlItems'],['pre','sel',null],['rmk','text',null]];
-const blankSample = () => ({id:'',mat:'',lot:'',cont:'',vol:'',qty:'',sdate:'',items:'',pre:'N',rmk:''});
+const blankSample = () => ({id:'',mat:'',lot:'',cont:'',vol:'',qty:'',sdate:'',items:'',pre:'N',rmk:'',billKey:''});
+const edReqForBill = () => ({company:getEd('company'), division:getEd('division'), dept:getEd('dept'), purTeam:getEd('purTeam'), purContact:getEd('purContact'), purEmail:getEd('purEmail')});
 function renderSamples(){
   $('smpBody').innerHTML = edSamples.map((s,i)=>`<tr><td class="muted">${i+1}</td>${SMP_COLS.map(([k,ty,dl])=>
     ty==='sel' ? `<td><select onchange="smpSet(${i},'${k}',this.value)"><option${s[k]==='N'?' selected':''}>N</option><option${s[k]==='Y'?' selected':''}>Y</option></select></td>`
     : `<td><input type="${ty}" value="${escH(s[k])}"${dl?` list="${dl}"`:''} oninput="smpSet(${i},'${k}',this.value)"${k==='id'?' style="min-width:110px"':''}></td>`).join('')}
+    <td>${(edId && lockOf(edId, s)) ? `<span class="pill lock">🔒 ${escH(lockOf(edId, s))}</span>` : `<select class="bill-sel" onchange="smpSet(${i},'billKey',this.value)">${contactOptions(getEd('company'), s.billKey||'', reqDefaultLabel(edReqForBill()))}</select>`}</td>
     <td><button class="icon-btn" style="position:static" onclick="delSampleRow(${i})" title="${t('ed.delRow')}">×</button></td></tr>`).join('');
   smpTotals();
 }
@@ -1179,6 +1296,15 @@ window.saveRequest = async () => {
   if (!r.dueDate){ $('ed-dueDate').classList.add('warn'); showToast(t('t.needDue'), true); return; }
   if (r.samples.some(s=>!s.id)){ showToast(t('t.needId'), true); return; }
   if (!r.samples.length && !confirm(t('c.noSamples'))) return;
+  r.samples.forEach(s => { if (!s.uid) s.uid = newUid(); if (!s.billKey) s.billKey = ''; });
+  if (edId){   // 이미 청구된 샘플은 지울 수 없고, 내용이 바뀌면 경고
+    const prevS = requests[edId]?.samples || [], uids = new Set(r.samples.map(s=>s.uid));
+    const gone = prevS.filter(s => s && lockOf(edId, s) && !uids.has(s.uid));
+    if (gone.length){ alert(t('c.lockedRemove', gone.map(s=>`${s.id} → ${lockOf(edId,s)}`).join(', '))); return; }
+    const sig = s => [s.id,s.mat,s.lot,s.items,s.qty,s.pre,s.billKey||''].join('|');
+    const chg = prevS.filter(p => p && lockOf(edId, p) && r.samples.some(s => s.uid===p.uid && sig(s)!==sig(p)));
+    if (chg.length && !confirm(t('c.lockedChange', chg.map(s=>s.id).join(', ')))) return;
+  }
   if (!r.reqNo) r.reqNo = nextReqNo(r.receivedDate || r.reqDate);
   const dup = findDup(r, edId);
   if (dup && !confirm(t('c.dup', dup[1].reqNo, deptLabel(dup[1]), dup[1].reqDate||'-'))) return;
@@ -1190,6 +1316,10 @@ window.saveRequest = async () => {
   const ok = await guard(async () => {
     if (edId) await update(ref(db, ROOT+'/requests/'+edId), {...r, ...(prev?.stage!==r.stage?{[`stageLog/${r.stage}`]:r.updatedAt}:{})});
     else await push(reqRef, {...r, createdAt:r.updatedAt, stageLog:{[r.stage]:r.updatedAt}});
+    if (r.company && r.purEmail){   // 요청 부서 담당자를 청구 담당자 목록에 (없을 때만)
+      const c = {company:r.company, division:r.division||'', dept:r.dept||'', purTeam:r.purTeam||'', contact:r.purContact||'', email:r.purEmail};
+      const k = ctKey(c); if (!contacts[k]) await set(ref(db, `${ROOT}/contacts/${k}`), {...c, note:'request', createdAt:r.updatedAt});
+    }
   }, edId ? t('t.reqEdited', r.reqNo) : t('t.reqSaved', r.reqNo));
   btn.disabled=false;
   if (ok){
@@ -1285,6 +1415,13 @@ function parseRequestWorkbook(XLSX, data){
 
   // 요청 부서: 'Dept Master' 시트에서 직접 조회 (수식 캐시가 없어도 동작, 공정(Division)도 여기서)
   const dm = wb.Sheets[wb.SheetNames.find(n=>/dept\s*master/i.test(n))];
+  const dmRows = [];
+  if (dm && dm['!ref']){
+    XLSX.utils.sheet_to_json(dm, {header:1, defval:''}).slice(1).forEach(row => {
+      const g = i => String(row[i]??'').trim();
+      if (g(1) && !/^company/i.test(g(1))) dmRows.push({key:g(0), company:g(1), division:g(2), dept:g(3), purTeam:g(4), contact:g(5), email:g(6)});
+    });
+  }
   if (f.deptKey && dm && dm['!ref']){
     const rows = XLSX.utils.sheet_to_json(dm, {header:1, defval:''});
     // A열(Key)은 수식이라 캐시가 없을 수 있음 → B/C/D(회사/공정/부서)로 키를 다시 만들어 비교
@@ -1300,14 +1437,14 @@ function parseRequestWorkbook(XLSX, data){
   const samples = [];
   const H = findLabel(/^Sample ID/i);
   if (H){
-    const map = {}, keys = [['no',/^No\.?$/i],['id',/^Sample ID/i],['mat',/^Material/i],['lot',/^Lot/i],['cont',/^Container/i],['vol',/^Volume/i],['qty',/^Qty/i],['sdate',/^Sampling Date/i],['items',/^Analysis Items/i],['pre',/^Pre-?treat/i],['rmk',/^Remarks/i]];
+    const map = {}, keys = [['no',/^No\.?$/i],['id',/^Sample ID/i],['mat',/^Material/i],['lot',/^Lot/i],['cont',/^Container/i],['vol',/^Volume/i],['qty',/^Qty/i],['sdate',/^Sampling Date/i],['items',/^Analysis Items/i],['pre',/^Pre-?treat/i],['rmk',/^Remarks/i],['bill',/^(Bill|Billing|Purchasing Dept|청구)/i]];
     for (let c=R.s.c; c<=R.e.c; c++){ const h=first(txt(H.r,c)); const k=keys.find(([,re])=>re.test(h)); if (k && map[k[0]]===undefined) map[k[0]]=c; }
     for (let r=H.r+1; r<=R.e.r; r++){
       const a = txt(r, map.no ?? 0);
       if (/^\d+\.\s/.test(a)) break;                // 다음 섹션 ("4. SAMPLE COUNT")
       if (/^ex$/i.test(a)) continue;                // 예시 행 제외
       const g = k => map[k]===undefined ? '' : txt(r, map[k]);
-      const s = {id:g('id'), mat:g('mat'), lot:g('lot'), cont:g('cont'), vol:'', qty:'', sdate:'', items:g('items'), pre:'', rmk:g('rmk')};
+      const s = {id:g('id'), mat:g('mat'), lot:g('lot'), cont:g('cont'), vol:'', qty:'', sdate:'', items:g('items'), pre:'', rmk:g('rmk'), billCol:g('bill')};
       if (!s.id && !s.mat && !s.lot) continue;
       const num = k => { const v=map[k]===undefined?null:cellAt(r,map[k])?.v; const n=typeof v==='number'?v:parseFloat(String(v??'').replace(/,/g,'')); return isNaN(n)?'':n; };
       s.vol=num('vol'); s.qty=num('qty');
@@ -1323,7 +1460,7 @@ function parseRequestWorkbook(XLSX, data){
   if (f.reqDate && f.dueDate && f.dueDate < f.reqDate) W('dueBeforeReq', []);
   const ids = samples.map(s=>s.id).filter(Boolean), dupIds = ids.filter((x,i)=>ids.indexOf(x)!==i);
   if (dupIds.length) W('dupIds', [[...new Set(dupIds)].join(', ')]);
-  return {sheet:sn, fields:f, samples, warnings};
+  return {sheet:sn, fields:f, samples, warnings, dmRows};
 }
 /*PARSER_END*/
 
@@ -1339,15 +1476,21 @@ window.onFile = async file => {
   try {
     const res = parseRequestWorkbook(window.XLSX, new Uint8Array(await file.arrayBuffer()));
     const f = res.fields;
+    const ctRes = await upsertContactsFromForm(res.dmRows);
+    const billWarn = [];
+    res.samples.forEach(s => {
+      if (s.billCol){ const k = resolveBillCol(s.billCol, res.dmRows); if (k) s.billKey = k; else billWarn.push(t('imp.billCol', s.id||'?', s.billCol)); }
+      delete s.billCol;
+    });
     const r = {...f, samples:res.samples, source:'import', fileName:file.name, stage:'접수대기', priority: f.priority || PRIORITIES[0]};
     if (r.priority && !PRIORITIES.includes(r.priority)) r.priority = /urgent|긴급/i.test(r.priority) ? PRIORITIES[1] : PRIORITIES[0];
     if (list(settings.instruments).length===1) r.instrument = list(settings.instruments)[0];
     loadEditor(r, null);   // 고객 Request No. 칸은 JNFAM 사용 칸 → 비어 있으면 저장 시 자동 채번
-    const warn = res.warnings.map(w => t('w.'+w.c, ...w.a.map(String)));
+    const warn = [...res.warnings.map(w => t('w.'+w.c, ...w.a.map(String))), ...billWarn, ...ctRes.diffs];
     const dup = findDup(r, null);
     if (dup) warn.unshift(t('imp.dupReq', dup[1].reqNo, deptLabel(dup[1]), dup[1].reqDate||'-'));
     msgs.innerHTML = `<div class="msg ok">${t('imp.ok', escH(file.name), res.samples.length, escH([f.company,f.division,f.dept].filter(Boolean).join(' · ')||t('imp.noDeptShort')), escH(f.dueDate||t('imp.none')))}</div>` +
-      warn.map(w=>`<div class="msg warn">⚠️ ${escH(w)}</div>`).join('');
+      (ctRes.added?`<div class="msg ok">👤 ${escH(t('imp.ctAdded', ctRes.added))}</div>`:'') + warn.map(w=>`<div class="msg warn">⚠️ ${escH(w)}</div>`).join('');
     if (!f.dueDate) $('ed-dueDate').classList.add('warn');
     $('ed-receivedDate').focus();
   } catch(e){
@@ -1435,6 +1578,538 @@ window.saveSettings = () => guard(()=>set(setRef, {
   capacity: Math.max(1, +$('setCap').value||20), tatDays: Math.max(0, +$('setTat').value||0),
   analysts: list($('setAnalysts').value).join(', '), instruments: list($('setInst').value).join(', '),
 }), t('t.setSaved'));
+
+/* ═════════════ 💵 청구 · 인보이스 ═════════════
+   © 2025–2026 Young Tai Kang. All rights reserved. Unauthorized use, copying, modification, or distribution without the written permission of Young Tai Kang is prohibited.
+
+   · 청구 담당자는 '샘플 단위'로 정함: sample.billKey(청구 담당자 목록의 키). 비어 있으면 의뢰서 2번 섹션의 요청 부서 담당자.
+   · 인보이스는 [청구 담당자 이메일 + 고객 PO] 단위로 자동으로 나눔(설정에서 PO 무시 가능).
+   · 중복 방지: 샘플마다 잠금 키(의뢰ID_샘플uid)를 billing/locks에 기록. 잠금 확인 + 인보이스 번호 채번을
+     하나의 Firebase 트랜잭션으로 처리 → 두 사람이 동시에 발행해도 같은 샘플이 두 번 청구되거나 번호가 겹치지 않음.
+   · 기간은 후보를 거르는 필터일 뿐, 중복 여부는 잠금으로만 판단 → 기간이 겹쳐도 이미 청구된 샘플은 자동 제외.
+   · 잘못 발행한 인보이스는 삭제하지 않고 Void → 잠금만 풀려 다시 청구 가능, 이력은 남음.
+*/
+Object.assign(I18N, {
+  'tab.billing':['💵 청구','💵 Billing'],
+  'bl.vCand':['📄 청구 대상','📄 To bill'],'bl.vInv':['🧾 발행 내역','🧾 Invoices'],'bl.vPrice':['💲 단가표','💲 Price list'],'bl.vCt':['👤 청구 담당자','👤 Billing contacts'],'bl.vSet':['⚙ 청구 설정','⚙ Billing settings'],
+  'bl.period':['기간','Period'],'bl.basis':['기준일','Based on'],'bl.bSent':['결과 발송일','Result sent'],'bl.bRec':['접수일','Received'],'bl.bDue':['결과 약속일','Due date'],
+  'bl.lastM':['지난달','Last month'],'bl.thisM':['이번 달','This month'],'bl.showBilled':['청구 완료 건도 표시','Show billed'],'bl.allCo':['전체 회사','All companies'],
+  'bl.st.ok':['청구 가능','Billable'],'bl.st.locked':['청구됨','Billed'],'bl.st.notSent':['결과 미발송','Not sent'],'bl.st.noContact':['담당자 미지정','No contact'],'bl.st.noPrice':['단가 없음','No price'],
+  'bl.sum.smp':['청구 가능 샘플','Billable samples'],'bl.sum.grp':['인보이스(담당자별)','Invoices (by contact)'],'bl.sum.amt':['예상 금액','Est. amount'],
+  'bl.sum.noCt':['⚠ 담당자 미지정','⚠ No contact'],'bl.sum.noPrice':['⚠ 단가 없음','⚠ No price'],'bl.sum.notSent':['결과 미발송','Not sent'],
+  'bl.grpNoCt':['⚠️ 청구 담당자 미지정 — 샘플별로 담당자를 지정해야 인보이스를 만들 수 있습니다','⚠️ No billing contact — assign a contact to each sample before invoicing'],
+  'bl.make':['🧾 인보이스 작성 ({0}건 · {1})','🧾 Create invoice ({0} · {1})'],'bl.noneSel':['선택된 샘플이 없습니다','No samples selected'],
+  'bl.empty':['이 기간·조건에 청구할 샘플이 없습니다','Nothing to bill for this period'],
+  'bl.h.inc':['포함','Incl.'],'bl.h.sent':['발송일','Sent'],'bl.h.bill':['청구 담당자','Billing contact'],'bl.h.status':['상태','Status'],'bl.h.amt':['예상 금액','Est.'],
+  'bl.defOpt':['(의뢰 기본) {0}','(request default) {0}'],'bl.defNone':['(의뢰 기본) — 미지정','(request default) — none'],'bl.ctMissing':['⚠ 목록에 없는 담당자','⚠ contact not in list'],
+  'bl.attn':['Attn','Attn'],'bl.po':['PO','PO'],'bl.noPo':['PO 없음','no PO'],
+  't.billSet':['✓ 청구 담당자 변경됨','✓ Billing contact changed'],'t.billLocked':['이미 청구된 샘플은 담당자를 바꿀 수 없습니다 (먼저 Void)','Billed samples cannot change contact (void first)'],
+  // 미리보기·발행
+  'iv.preview':['인보이스 미리보기 · 발행','Invoice preview · issue'],'iv.billTo':['청구처 (Bill To)','Bill To'],'iv.company':['회사','Company'],'iv.team':['구매팀','Purchasing team'],
+  'iv.contact':['담당자 (Attn)','Attn'],'iv.email':['이메일 *','E-mail *'],'iv.date':['인보이스 일자','Invoice date'],'iv.terms':['결제 조건 (일)','Terms (days)'],'iv.due':['지급 기한','Due date'],
+  'iv.notes':['비고 (인보이스에 표시)','Notes (printed)'],'iv.lines':['품목','Line items'],'iv.desc':['내역','Description'],'iv.qty':['수량','Qty'],'iv.price':['단가','Unit price'],'iv.amt':['금액','Amount'],
+  'iv.addLine':['+ 기타 항목 추가 (운송비 등)','+ Add other line (shipping etc.)'],'iv.total':['합계','Total'],'iv.issue':['🧾 발행 (번호 부여·잠금)','🧾 Issue (number + lock)'],
+  'iv.issuing':['발행 중...','Issuing...'],'iv.periodTxt':['청구 기간 {0} ~ {1} ({2} 기준)','Period {0} ~ {1} (by {2})'],
+  'iv.needEmail':['청구 담당자 이메일이 없습니다','Billing contact e-mail is required'],'iv.noLines':['품목이 없습니다','No line items'],
+  'iv.zeroPrice':['단가가 0인 항목이 {0}건 있습니다. 그대로 발행할까요?','{0} line(s) have a zero price. Issue anyway?'],
+  'iv.conflict':['❌ 발행 중단: 샘플이 이미 {0}로 청구되었습니다 (다른 사용자가 먼저 발행). 목록을 새로 확인하세요.','❌ Not issued: a sample was already billed on {0} (someone issued first). Refresh the list.'],
+  'iv.issued':['✅ {0} 발행됨','✅ {0} issued'],'iv.fail':['발행 실패: {0}','Issue failed: {0}'],
+  'iv.confirm':['{0} 앞으로 {1}건, {2} 인보이스를 발행합니다.\n발행하면 이 샘플들은 잠기고 다시 청구되지 않습니다.','Issue an invoice to {0}: {1} lines, {2}.\nThese samples will be locked and cannot be billed again.'],
+  // 발행 내역
+  'il.search':['🔍 번호·회사·담당자·PO 검색','🔍 Search no. · company · contact · PO'],'il.all':['전체 상태','All statuses'],
+  'il.no':['인보이스 번호','Invoice No.'],'il.date':['일자','Date'],'il.billTo':['청구처','Bill to'],'il.smp':['샘플','Samples'],'il.amt':['금액','Amount'],'il.status':['상태','Status'],
+  'is.issued':['발행','Issued'],'is.paid':['입금 완료','Paid'],'is.void':['취소(Void)','Void'],
+  'il.print':['🖨 인쇄/PDF','🖨 Print/PDF'],'il.xlsx':['⬇ 엑셀','⬇ Excel'],'il.mail':['✉ 메일','✉ Mail'],'il.paid':['입금 처리','Mark paid'],'il.unpaid':['입금 취소','Unmark paid'],'il.void':['Void','Void'],
+  'il.empty':['발행된 인보이스가 없습니다','No invoices yet'],'il.sumOpen':['미입금','Unpaid'],'il.sumPaid':['입금 완료','Paid'],
+  'c.void':['{0}을(를) Void 처리할까요?\n잠금이 풀려 포함된 샘플을 다시 청구할 수 있게 됩니다. (인보이스 기록은 남음)\n\n사유를 입력하세요:','Void {0}?\nIts samples are unlocked and can be billed again (the record stays).\n\nEnter a reason:'],
+  't.voided':['🚫 {0} Void 처리됨','🚫 {0} voided'],'t.paid':['✓ 입금 처리됨','✓ Marked paid'],'t.unpaid':['✓ 입금 취소됨','✓ Unmarked'],
+  // 단가표
+  'pr.desc':['샘플 1건(또는 용기 1개)당 분석 항목별 단가. 회사·물질을 비우면 공통 단가입니다. 같은 항목이면 <b>회사+물질 일치 → 회사 일치 → 물질 일치 → 공통</b> 순으로 적용합니다. 의뢰서의 분석 항목(쉼표로 여러 개)마다 1줄씩 청구됩니다.','Price per sample (or per container) for each analysis item. Leave company/material blank for a common price. Match order: <b>company+material → company → material → common</b>. One line is billed per analysis item on the form (comma-separated).'],
+  'pr.co':['회사 (공통=비움)','Company (blank=all)'],'pr.mat':['물질 (전체=비움)','Material (blank=all)'],'pr.item':['분석 항목 *','Analysis item *'],'pr.per':['단위','Per'],'pr.price':['단가 (USD) *','Price (USD) *'],'pr.note':['비고','Note'],
+  'pr.perS':['샘플','sample'],'pr.perC':['용기(Qty)','container (qty)'],'pr.add':['+ 단가 추가','+ Add price'],'pr.empty':['단가가 없습니다. 먼저 단가를 등록하세요.','No prices yet. Add one first.'],
+  't.prSaved':['✓ 단가 저장됨','✓ Price saved'],'t.prNeed':['분석 항목과 단가를 입력하세요','Enter the item and price'],'c.prDel':['이 단가를 삭제할까요?','Delete this price?'],
+  // 청구 담당자
+  'ct.desc':['인보이스를 받는 고객 구매 담당자 목록입니다. 의뢰서를 가져올 때 <b>Dept Master 시트의 행이 자동으로 추가</b>됩니다. 샘플마다 이 목록에서 청구 담당자를 고를 수 있습니다. 담당자가 바뀌면 여기서 고치면 아직 청구하지 않은 샘플 전부에 반영됩니다.','Customer purchasing contacts who receive invoices. Rows of the form\'s <b>Dept Master sheet are added automatically</b> on import. Each sample picks its billing contact from this list. Editing a contact here applies to every sample not yet billed.'],
+  'ct.co':['회사 *','Company *'],'ct.div':['공정','Division'],'ct.dept':['요청 부서','Department'],'ct.team':['처리 구매팀','Purchasing team'],'ct.name':['구매 담당자','Contact'],'ct.email':['구매 이메일 *','E-mail *'],'ct.note':['비고','Note'],'ct.used':['사용','Used'],
+  'ct.add':['+ 담당자 추가','+ Add contact'],'ct.fromReq':['↺ 기존 의뢰에서 가져오기','↺ Collect from existing requests'],'ct.empty':['등록된 담당자가 없습니다','No contacts yet'],
+  't.ctSaved':['✓ 담당자 저장됨','✓ Contact saved'],'t.ctNeed':['회사와 이메일을 입력하세요','Enter company and e-mail'],'t.ctDup':['같은 회사·공정·부서·구매팀 담당자가 이미 있습니다','A contact with the same company/division/dept/team exists'],
+  'c.ctDel':['담당자 "{0}"을(를) 삭제할까요?','Delete contact "{0}"?'],'t.ctInUse':['미청구 샘플 {0}건이 이 담당자를 쓰고 있어 삭제할 수 없습니다','{0} unbilled sample(s) use this contact; cannot delete'],
+  't.ctCollected':['✓ 담당자 {0}명 추가됨','✓ {0} contact(s) added'],
+  'imp.ctAdded':['청구 담당자 {0}명을 Dept Master에서 새로 추가했습니다','Added {0} billing contact(s) from Dept Master'],
+  'imp.ctDiff':['Dept Master의 담당자가 앱 목록과 다릅니다: {0} — 의뢰서 "{1}" / 앱 "{2}". 맞는 쪽을 [💵 청구 → 👤 청구 담당자]에서 확인하세요','Dept Master contact differs from the app: {0} — form "{1}" / app "{2}". Check it in [💵 Billing → 👤 Contacts]'],
+  'imp.billCol':['샘플 {0}: 청구 부서 "{1}"를 담당자 목록에서 찾지 못했습니다 — 직접 지정하세요','Sample {0}: billing dept "{1}" not found in contacts — assign manually'],
+  // 청구 설정
+  'bs.prefix':['인보이스 번호 앞부분','Invoice number prefix'],'bs.prefixNote':['번호 = 앞부분 + YYMM + -### (월별 자동 증가)','No. = prefix + YYMM + -### (auto per month)'],
+  'bs.terms':['기본 결제 조건 (일)','Default terms (days)'],'bs.pre':['전처리 추가 요금 (샘플당 USD)','Pre-treatment fee (USD/sample)'],'bs.urg':['긴급 할증 (%)','Urgent surcharge (%)'],
+  'bs.byPo':['고객 PO가 다르면 인보이스를 나눔','Separate invoices per customer PO'],'bs.seller':['발행 회사명','Seller name'],'bs.addr':['발행 회사 주소','Seller address'],'bs.phone':['전화','Phone'],'bs.email':['이메일','E-mail'],
+  'bs.remit':['입금 안내 (인보이스 하단)','Remittance info (printed)'],'bs.save':['청구 설정 저장','Save billing settings'],'t.bsSaved':['✅ 청구 설정 저장됨','✅ Billing settings saved'],
+  // 의뢰 쪽
+  's.bill':['청구 담당자','Billing contact'],'s.inv':['인보이스','Invoice'],
+  'c.lockedDel':['이 의뢰에는 청구된 샘플이 있습니다 ({0}). 먼저 해당 인보이스를 Void 하세요.','This request has billed samples ({0}). Void the invoice first.'],
+  'c.lockedRemove':['청구된 샘플({0})을 지우려고 합니다. 먼저 해당 인보이스를 Void 하세요.','You are removing billed sample(s) ({0}). Void the invoice first.'],
+  'c.lockedChange':['청구된 샘플 {0}의 내용이 바뀌었습니다. 이미 발행된 인보이스 금액은 바뀌지 않습니다. 저장할까요?','Billed sample(s) {0} changed. Issued invoice amounts will not change. Save?'],
+});
+
+const billRef = ref(db, ROOT+'/billing'), invRef = ref(db, ROOT+'/invoices'), ctRef = ref(db, ROOT+'/contacts'), prRef = ref(db, ROOT+'/prices'), bsRef = ref(db, ROOT+'/billSettings');
+let billing = {locks:{}, seq:{}}, invoices = {}, contacts = {}, prices = {};
+let bset = {prefix:'JNFAM-AN-', terms:30, pretreat:0, urgentPct:0, byPo:true, seller:'JNFAM LLC', address:'', phone:'', email:'ytkang@jnfgroup.net', remit:''};
+let blView = 'cand', blExcl = new Set(), blGroups = [], draft = null;
+
+const money = n => '$' + (Math.round((+n||0)*100)/100).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
+const r2 = n => Math.round((+n||0)*100)/100;
+const newUid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const normS = s => String(s??'').replace(/\s+/g,' ').trim().toLowerCase();
+const fbKey = s => s.replace(/[.#$\[\]\/\x00-\x1f\x7f]/g,'_').slice(0,700);
+/* 담당자 키: 회사|공정|부서|구매팀 (부서가 없으면 담당자 이름까지) → 담당자가 바뀌어도 같은 부서면 같은 키로 갱신 */
+const ctKey = c => fbKey([c.company, c.division, c.dept, c.purTeam, c.dept?'':c.contact].map(normS).join('|'));
+const lockKey = (reqId, s) => `${reqId}_${s.uid}`;
+const lockOf = (reqId, s) => s && s.uid ? (billing.locks||{})[lockKey(reqId, s)] || '' : '';
+const ctLabel = c => [c.purTeam || [c.division,c.dept].filter(Boolean).join(' '), c.contact].filter(Boolean).join(' · ') + (c.email?` <${c.email}>`:'');
+const ctLabelFull = c => `${c.company||'-'} · ${ctLabel(c)}`;
+
+/* 샘플 → 청구 담당자: 샘플 지정 > 요청 부서(목록 우선, 없으면 의뢰서 값) */
+function billOf(r, s){
+  if (s && s.billKey){
+    const c = contacts[s.billKey];
+    return c ? {...c, key:s.billKey, src:'sample'} : {missing:true, key:s.billKey, company:r.company};
+  }
+  const k = r.company ? ctKey({company:r.company, division:r.division, dept:r.dept, purTeam:r.purTeam, contact:r.purContact}) : '';
+  if (k && contacts[k]) return {...contacts[k], key:k, src:'req'};
+  return {company:r.company, division:r.division, dept:r.dept, purTeam:r.purTeam, contact:r.purContact, email:r.purEmail, key:'', src:'req'};
+}
+function contactOptions(company, sel, defLabel){
+  const all = Object.entries(contacts).filter(([,c])=>c).sort((a,b)=>ctLabelFull(a[1]).localeCompare(ctLabelFull(b[1])));
+  const mine = all.filter(([,c])=>!company || normS(c.company)===normS(company)), other = all.filter(x=>!mine.includes(x));
+  const opt = ([k,c]) => `<option value="${escH(k)}"${k===sel?' selected':''}>${escH(company && normS(c.company)===normS(company) ? ctLabel(c) : ctLabelFull(c))}</option>`;
+  let h = `<option value=""${!sel?' selected':''}>${escH(defLabel)}</option>`;
+  if (sel && !contacts[sel]) h += `<option value="${escH(sel)}" selected>${t('bl.ctMissing')}</option>`;
+  h += mine.map(opt).join('');
+  if (other.length) h += `<optgroup label="—">${other.map(opt).join('')}</optgroup>`;
+  return h;
+}
+const reqDefaultLabel = r => { const b = billOf(r, {}); return b.email ? t('bl.defOpt', ctLabel(b)) : t('bl.defNone'); };
+
+/* 단가 찾기: 회사+물질 > 회사 > 물질 > 공통 */
+function priceFor(company, mat, item){
+  let best=null, bs=-1;
+  Object.entries(prices).forEach(([id,p]) => {
+    if (!p || normS(p.item)!==normS(item)) return;
+    if (p.company && normS(p.company)!==normS(company)) return;
+    if (p.mat && normS(p.mat)!==normS(mat)) return;
+    const sc = (p.company?2:0) + (p.mat?1:0);
+    if (sc>bs){ bs=sc; best={...p, id}; }
+  });
+  return best;
+}
+const splitItems = s => String(s||'').split(/[,/;]/).map(x=>x.trim()).filter(Boolean);
+function sampleLines(r, s, reqId){
+  const lk = lockKey(reqId, s), its = splitItems(s.items); if (!its.length) its.push('Analysis');
+  const out = its.map(item => {
+    const p = priceFor(r.company, s.mat, item), cont = p && p.per==='container';
+    const qty = cont ? (+s.qty||1) : 1;
+    return {lk, reqId, reqNo:r.reqNo||'', uid:s.uid, sampleId:s.id, desc:`${item} — ${s.id}${s.mat?' / '+s.mat:''}${s.lot?' / Lot '+s.lot:''}`, qty, unit:cont?'container':'sample', price:p?+p.price:0, noPrice:!p};
+  });
+  if (s.pre==='Y' && +bset.pretreat>0) out.push({lk, reqId, reqNo:r.reqNo||'', uid:s.uid, sampleId:s.id, desc:`Pre-treatment — ${s.id}`, qty:1, unit:'sample', price:+bset.pretreat});
+  return out;
+}
+const linesAmt = ls => r2(ls.reduce((a,l)=>a + r2((+l.qty||0)*(+l.price||0)), 0));
+
+/* ── 구독 ── */
+const rerenderBill = () => { if ($('tab-billing') && $('tab-billing').style.display!=='none') renderBilling(); };
+onValue(billRef, s => { billing = {locks:{}, seq:{}, ...(s.val()||{})}; billing.locks ||= {}; rerenderBill(); if ($('reqOverlay').classList.contains('show') && openReqId) openReq(openReqId); }, onErr('billing'));
+onValue(invRef, s => { invoices = s.val()||{}; rerenderBill(); }, onErr('invoices'));
+onValue(ctRef, s => { contacts = s.val()||{}; rerenderBill(); if ($('tab-register').style.display!=='none') renderSamples(); }, onErr('contacts'));
+onValue(prRef, s => { prices = s.val()||{}; rerenderBill(); }, onErr('prices'));
+onValue(bsRef, s => { bset = {...bset, ...(s.val()||{})}; loadBsForm(); rerenderBill(); }, onErr('billSettings'));
+Object.assign(I18N, {'r.billing':['청구 잠금','billing locks'],'r.invoices':['인보이스','invoices'],'r.contacts':['청구 담당자','contacts'],'r.prices':['단가표','prices'],'r.billSettings':['청구 설정','billing settings']});
+
+/* 기존 샘플에 uid가 없으면 한 번 부여 (잠금 키로 사용 — 샘플 순서가 바뀌어도 유지) */
+let uidBusy = false;
+async function ensureUids(){
+  if (uidBusy) return; const ch = {};
+  reqEntries().forEach(([id,r]) => (r.samples||[]).forEach((s,i) => { if (s && !s.uid) ch[`requests/${id}/samples/${i}/uid`] = newUid(); }));
+  if (!Object.keys(ch).length) return;
+  uidBusy = true; try { await update(ref(db, ROOT), ch); } catch(e){} uidBusy = false;
+}
+
+/* ── 의뢰서 Dept Master → 청구 담당자 목록 자동 추가 ── */
+async function upsertContactsFromForm(dmRows){
+  const add = {}, diffs = [];
+  (dmRows||[]).forEach(c => {
+    if (!c.company || !(c.email || c.contact)) return;
+    const k = ctKey(c), ex = contacts[k];
+    if (!ex){ if (!add[k]) add[k] = {company:c.company, division:c.division||'', dept:c.dept||'', purTeam:c.purTeam||'', contact:c.contact||'', email:c.email||'', note:'Dept Master', createdAt:new Date().toISOString()}; }
+    else if (normS(ex.email)!==normS(c.email) || normS(ex.contact)!==normS(c.contact)) diffs.push(t('imp.ctDiff', [c.company,c.division,c.dept].filter(Boolean).join(' / '), `${c.contact} <${c.email}>`, `${ex.contact} <${ex.email}>`));
+  });
+  const n = Object.keys(add).length;
+  if (n){ try { await update(ctRef, add); } catch(e){ showToast(t('t.saveFail', e.message, ROOT), true); } }
+  return {added:n, diffs};
+}
+/* 샘플별 '청구 부서' 칸(선택 사항) 값 → 담당자 키 */
+function resolveBillCol(v, dmRows){
+  const nv = normS(v); if (!nv) return '';
+  const row = (dmRows||[]).find(c => normS(c.key)===nv || normS([c.company,c.division,c.dept].filter(Boolean).join(' / '))===nv);
+  if (row) return ctKey(row);
+  const hit = Object.entries(contacts).find(([,c]) => c && (normS([c.company,c.division,c.dept].filter(Boolean).join(' / '))===nv || normS(c.email)===nv || normS(c.purTeam)===nv));
+  return hit ? hit[0] : null;
+}
+
+/* ═════ 화면 ═════ */
+window.setBlView = v => { blView = v; renderBilling(); };
+function blDefaultPeriod(kind){
+  const y=today.getFullYear(), m=today.getMonth();
+  const a = kind==='last' ? new Date(y,m-1,1) : new Date(y,m,1), b = kind==='last' ? new Date(y,m,0) : new Date(y,m+1,0);
+  $('blFrom').value = ymd(a); $('blTo').value = ymd(b); renderBilling();
+}
+window.blPeriod = blDefaultPeriod;
+
+function renderBilling(){
+  document.querySelectorAll('#blSeg button').forEach(b=>b.classList.toggle('on', b.dataset.v===blView));
+  ['cand','inv','price','ct','set'].forEach(v => $('bl-'+v).style.display = v===blView ? 'block' : 'none');
+  if (blView==='cand') renderCand();
+  else if (blView==='inv') renderInvList();
+  else if (blView==='price') renderPrices();
+  else if (blView==='ct') renderContacts();
+}
+
+function basisDate(r, b){ return b==='received' ? (r.receivedDate||'') : b==='due' ? (r.dueDate||'') : (r.completedDate||''); }
+function collectCandidates(){
+  const from=$('blFrom').value, to=$('blTo').value, b=$('blBasis').value, fc=$('blCo').value, showB=$('blShowBilled').checked;
+  const rows = [];
+  reqEntries().forEach(([id,r]) => {
+    const d = basisDate(r, b); if (!d || (from && d<from) || (to && d>to)) return;
+    if (fc && r.company!==fc) return;
+    (r.samples||[]).forEach((s,i) => {
+      if (!s) return;
+      const inv = lockOf(id, s);
+      if (inv && !showB) return;
+      const bill = billOf(r, s), lines = s.uid ? sampleLines(r, s, id) : [];
+      let st = 'ok';
+      if (inv) st='locked'; else if (!s.uid) st='notSent'; else if (!isDone(r)) st='notSent'; else if (bill.missing || !String(bill.email||'').trim()) st='noContact';
+      rows.push({id, r, s, i, inv, bill, lines, st, noPrice: lines.some(l=>l.noPrice), amt: linesAmt(lines), date: d});
+    });
+  });
+  return rows;
+}
+function groupKeyOf(x){
+  if (x.st==='noContact') return '~nocontact';
+  return [normS(x.bill.email), normS(x.bill.company||x.r.company), bset.byPo ? normS(x.r.po) : ''].join('|');
+}
+function renderCand(){
+  const rows = collectCandidates();
+  const g = new Map();
+  rows.forEach(x => { const k=groupKeyOf(x); if (!g.has(k)) g.set(k, []); g.get(k).push(x); });
+  blGroups = [...g.entries()].sort((a,b)=> a[0]==='~nocontact' ? -1 : b[0]==='~nocontact' ? 1 : a[0].localeCompare(b[0]))
+    .map(([k,xs]) => ({k, xs: xs.sort((a,b)=>String(a.r.reqNo).localeCompare(String(b.r.reqNo)) || a.i-b.i)}));
+  const ok = rows.filter(x=>x.st==='ok'), inc = ok.filter(x=>!blExcl.has(x.lines[0]?.lk||''));
+  const grpN = new Set(inc.map(groupKeyOf)).size;
+  const chip = (l,v,c) => `<div class="stat-chip"${c?` style="border-color:${c}"`:''}><span style="color:var(--text3);font-size:11px">${l}</span><span class="stat-val">${v}</span></div>`;
+  $('blStats').innerHTML = chip(t('bl.sum.smp'), inc.length) + chip(t('bl.sum.grp'), grpN) + chip(t('bl.sum.amt'), money(inc.reduce((a,x)=>a+x.amt,0))) +
+    (rows.some(x=>x.st==='noContact') ? chip(t('bl.sum.noCt'), rows.filter(x=>x.st==='noContact').length, '#f59e0b') : '') +
+    (ok.some(x=>x.noPrice) ? chip(t('bl.sum.noPrice'), ok.filter(x=>x.noPrice).length, '#f59e0b') : '') +
+    (rows.some(x=>x.st==='notSent') ? chip(t('bl.sum.notSent'), rows.filter(x=>x.st==='notSent').length) : '');
+  if (!blGroups.length){ $('blGroups').innerHTML = `<div class="panel"><div class="empty"><div class="empty-icon">📭</div>${t('bl.empty')}</div></div>`; return; }
+  const stPill = x => {
+    if (x.st==='locked') return `<span class="pill lock">🔒 ${escH(x.inv)}</span>`;
+    if (x.st==='notSent') return `<span class="pill grey">${t('bl.st.notSent')}</span>`;
+    if (x.st==='noContact') return `<span class="pill warn">${t('bl.st.noContact')}</span>`;
+    return x.noPrice ? `<span class="pill warn">${t('bl.st.noPrice')}</span>` : `<span class="pill ok">${t('bl.st.ok')}</span>`;
+  };
+  $('blGroups').innerHTML = blGroups.map((G, gi) => {
+    const noCt = G.k==='~nocontact', h = G.xs.find(x=>x.st!=='locked') || G.xs[0], b = h.bill;
+    const sel = G.xs.filter(x=>x.st==='ok' && !blExcl.has(x.lines[0].lk));
+    const pos = [...new Set(G.xs.map(x=>x.r.po).filter(Boolean))];
+    const head = noCt ? `<div class="grp-h warn">${t('bl.grpNoCt')}</div>`
+      : `<div class="grp-h"><div><div class="grp-co">${escH(b.company||h.r.company||'-')} <span class="grp-team">${escH(b.purTeam||[b.division,b.dept].filter(Boolean).join(' ')||'')}</span></div>
+          <div class="grp-ct">${t('bl.attn')} <b>${escH(b.contact||'-')}</b> · <span class="mono">${escH(b.email||'')}</span> · ${t('bl.po')} ${pos.length?escH(pos.join(', ')):`<span class="muted">${t('bl.noPo')}</span>`}</div></div>
+          <button class="btn sm" ${sel.length?'':'disabled'} onclick="openDraft(${gi})">${t('bl.make', sel.length, money(sel.reduce((a,x)=>a+x.amt,0)))}</button></div>`;
+    return `<div class="panel grp">${head}<div class="tbl-wrap" style="box-shadow:none"><table class="tbl mini"><thead><tr>
+      <th>${t('bl.h.inc')}</th><th>${t('f.reqNo')}</th><th>${t('s.id')}</th><th>${t('s.mat')}</th><th>${t('s.lot')}</th><th>${t('s.items')}</th><th>${t('bl.h.sent')}</th><th style="min-width:220px">${t('bl.h.bill')}</th><th>${t('bl.h.status')}</th><th class="num">${t('bl.h.amt')}</th></tr></thead><tbody>
+      ${G.xs.map(x => { const lk=x.lines[0]?.lk||''; const can = x.st==='ok';
+        return `<tr${x.st==='locked'?' class="lockedrow"':''}><td>${can?`<input type="checkbox" ${blExcl.has(lk)?'':'checked'} onchange="blToggle('${escH(lk)}',this.checked)">`:''}</td>
+        <td class="mono"><a href="#" onclick="openReq('${x.id}',event);return false">${escH(x.r.reqNo||'-')}</a></td><td><b>${escH(x.s.id)}</b></td><td>${escH(x.s.mat)}</td><td class="mono">${escH(x.s.lot)}</td><td>${escH(x.s.items)}</td>
+        <td class="mono">${escH(x.r.completedDate||'-')}</td>
+        <td>${x.st==='locked' ? escH(ctLabel(x.bill)) : `<select class="sel bill-sel${x.st==='noContact'?' warn':''}" onchange="setSampleBill('${x.id}',${x.i},this.value)">${contactOptions(x.r.company, x.s.billKey||'', reqDefaultLabel(x.r))}</select>`}</td>
+        <td>${stPill(x)}</td><td class="num">${x.st==='locked'?'':money(x.amt)}</td></tr>`; }).join('')}
+      </tbody></table></div></div>`;
+  }).join('');
+}
+window.blToggle = (lk, on) => { if (on) blExcl.delete(lk); else blExcl.add(lk); renderCand(); };
+window.setSampleBill = async (reqId, i, key) => {
+  const r = requests[reqId], s = r?.samples?.[i]; if (!s) return;
+  if (lockOf(reqId, s)){ showToast(t('t.billLocked'), true); renderBilling(); return; }
+  await guard(()=>update(ref(db, `${ROOT}/requests/${reqId}/samples/${i}`), {billKey:key||null}), t('t.billSet'));
+};
+window.renderBilling = renderBilling;
+
+/* ── 인보이스 미리보기 (발행 전 편집) ── */
+window.openDraft = gi => {
+  const G = blGroups[gi]; if (!G) return;
+  const xs = G.xs.filter(x=>x.st==='ok' && !blExcl.has(x.lines[0].lk)); if (!xs.length){ showToast(t('bl.noneSel'), true); return; }
+  const b = xs[0].bill, lines = [];
+  const byReq = new Map(); xs.forEach(x => { if (!byReq.has(x.id)) byReq.set(x.id, []); byReq.get(x.id).push(x); });
+  byReq.forEach(arr => {
+    const ls = arr.flatMap(x=>x.lines.map(l=>({...l})));
+    lines.push(...ls);
+    const r = arr[0].r;
+    if (isUrgent(r) && +bset.urgentPct>0) lines.push({desc:`Urgent surcharge ${+bset.urgentPct}% — ${r.reqNo||''}`, qty:1, unit:'lot', price:r2(linesAmt(ls)*(+bset.urgentPct)/100), reqId:arr[0].id, reqNo:r.reqNo||''});
+  });
+  const pos = [...new Set(xs.map(x=>x.r.po).filter(Boolean))];
+  draft = { billTo:{company:b.company||xs[0].r.company||'', division:b.division||'', dept:b.dept||'', purTeam:b.purTeam||'', contact:b.contact||'', email:b.email||'', key:b.key||''},
+    po: pos.join(', '), date: TODAY, terms: +bset.terms||30, notes:'', lines,
+    period:{from:$('blFrom').value, to:$('blTo').value, basis:$('blBasis').value}, reqNos:[...new Set(xs.map(x=>x.r.reqNo).filter(Boolean))] };
+  renderDraft(); $('invOverlay').classList.add('show');
+};
+const dueOf = (d, n) => ymd(addDays(parseD(d), +n||0));
+function renderDraft(){
+  if (!draft) return;
+  const d = draft, bn = {sent:t('bl.bSent'), received:t('bl.bRec'), due:t('bl.bDue')}[d.period.basis];
+  $('invTitle').textContent = t('iv.preview');
+  $('invSub').textContent = t('iv.periodTxt', d.period.from||'-', d.period.to||'-', bn) + (d.reqNos.length?` · ${d.reqNos.join(', ')}`:'');
+  const inp = (path, v, ty='text', extra='') => `<input class="inp" type="${ty}" value="${escH(v)}" oninput="dSet('${path}',this.value)"${extra}>`;
+  $('invBody').innerHTML = `
+    <div class="sec-h">${t('iv.billTo')}</div>
+    <div class="grid3">
+      <div><label class="form-label">${t('iv.company')}</label>${inp('billTo.company', d.billTo.company)}</div>
+      <div><label class="form-label">${t('iv.team')}</label>${inp('billTo.purTeam', d.billTo.purTeam)}</div>
+      <div><label class="form-label">${t('iv.contact')}</label>${inp('billTo.contact', d.billTo.contact)}</div>
+      <div><label class="form-label">${t('iv.email')}</label>${inp('billTo.email', d.billTo.email, 'email')}</div>
+      <div><label class="form-label">${t('f.po')}</label>${inp('po', d.po)}</div>
+      <div><label class="form-label">${t('iv.date')}</label><input class="inp" type="date" value="${d.date}" onchange="dSet('date',this.value);renderDraftTotals()"></div>
+      <div><label class="form-label">${t('iv.terms')}</label><input class="inp" type="number" min="0" value="${d.terms}" oninput="dSet('terms',this.value);renderDraftTotals()"></div>
+      <div><label class="form-label">${t('iv.due')}</label><div class="inp mono" id="dDue" style="background:var(--white)"></div></div>
+      <div class="wide"><label class="form-label">${t('iv.notes')}</label>${inp('notes', d.notes)}</div>
+    </div>
+    <div class="sec-h" style="margin-top:18px">${t('iv.lines')}</div>
+    <div class="tbl-wrap" style="box-shadow:none"><table class="tbl mini"><thead><tr><th>#</th><th>${t('iv.desc')}</th><th class="num">${t('iv.qty')}</th><th class="num">${t('iv.price')}</th><th class="num">${t('iv.amt')}</th><th></th></tr></thead>
+      <tbody>${d.lines.map((l,i)=>`<tr${l.noPrice?' class="warnrow"':''}><td class="muted">${i+1}</td>
+        <td><input class="cell" value="${escH(l.desc)}" oninput="dLine(${i},'desc',this.value)" style="min-width:300px"></td>
+        <td><input class="cell num" type="number" min="0" step="any" value="${l.qty}" oninput="dLine(${i},'qty',this.value)" style="width:70px"></td>
+        <td><input class="cell num" type="number" min="0" step="0.01" value="${l.price}" oninput="dLine(${i},'price',this.value)" style="width:100px"></td>
+        <td class="num" id="dAmt${i}"></td>
+        <td><button class="icon-btn" style="position:static" onclick="dDel(${i})">×</button></td></tr>`).join('')}</tbody></table></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:8px">
+      <button class="btn ghost sm" onclick="dAdd()">${t('iv.addLine')}</button>
+      <div class="inv-total">${t('iv.total')} <b id="dTotal"></b></div>
+    </div>
+    <div class="btn-row"><button class="btn ghost" onclick="closeOv('invOverlay')">${t('btn.cancel')}</button><button class="btn" id="dIssue" onclick="issueInvoice()">${t('iv.issue')}</button></div>`;
+  renderDraftTotals();
+}
+window.renderDraftTotals = () => {
+  if (!draft) return;
+  draft.lines.forEach((l,i) => { const e=$('dAmt'+i); if (e) e.textContent = money((+l.qty||0)*(+l.price||0)); });
+  $('dTotal').textContent = money(linesAmt(draft.lines));
+  if (draft.date) $('dDue').textContent = dueOf(draft.date, draft.terms);
+};
+window.dSet = (path, v) => { const p=path.split('.'); if (p.length===2) draft[p[0]][p[1]]=v; else draft[p[0]]=v; };
+window.dLine = (i, k, v) => { draft.lines[i][k] = k==='desc' ? v : (v===''?'':+v); if (k==='price') draft.lines[i].noPrice=false; renderDraftTotals(); };
+window.dDel = i => { draft.lines.splice(i,1); renderDraft(); };
+window.dAdd = () => { draft.lines.push({desc:'', qty:1, unit:'ea', price:0}); renderDraft(); };
+
+/* ── 발행: 잠금 확인 + 번호 채번을 한 트랜잭션으로 ── */
+window.issueInvoice = async () => {
+  const d = draft; if (!d) return;
+  const email = String(d.billTo.email||'').trim();
+  if (!email){ showToast(t('iv.needEmail'), true); return; }
+  const lines = d.lines.filter(l => String(l.desc||'').trim() || +l.price);
+  if (!lines.length){ showToast(t('iv.noLines'), true); return; }
+  const zero = lines.filter(l => !(+l.price>0)).length;
+  if (zero && !confirm(t('iv.zeroPrice', zero))) return;
+  const total = linesAmt(lines);
+  if (!confirm(t('iv.confirm', `${d.billTo.company} · ${d.billTo.contact||''} <${email}>`, lines.length, money(total)))) return;
+  const keys = [...new Set(lines.map(l=>l.lk).filter(Boolean))];
+  const yymm = d.date.slice(2,4) + d.date.slice(5,7);
+  const prefix = String(bset.prefix||'').replace(/[.#$\[\]\/\s]/g,'-');
+  let no = null, conflict = null;
+  const btn = $('dIssue'); btn.disabled = true; btn.textContent = t('iv.issuing'); setSync('saving');
+  try {
+    const res = await runTransaction(billRef, cur => {
+      cur = cur || {}; const locks = cur.locks || {};
+      const hit = keys.find(k => locks[k]);
+      if (hit){ conflict = locks[hit]; return; }            // 중단 (이미 청구됨)
+      conflict = null;
+      const seqs = cur.seq || {}, n = (+seqs[yymm]||0) + 1;
+      no = `${prefix}${yymm}-${String(n).padStart(3,'0')}`;
+      const nl = {...locks}; keys.forEach(k => nl[k] = no);
+      return {...cur, locks:nl, seq:{...seqs, [yymm]:n}};
+    }, {applyLocally:false});
+    if (!res.committed){ setSync('on'); showToast(t('iv.conflict', conflict||'?'), true); btn.disabled=false; btn.textContent=t('iv.issue'); return; }
+    const inv = {
+      no, date:d.date, terms:+d.terms||0, dueDate:dueOf(d.date, d.terms), po:d.po||'', notes:d.notes||'',
+      billTo:{...d.billTo, email}, period:d.period, reqNos:d.reqNos,
+      lines: lines.map(l => ({desc:l.desc||'', qty:+l.qty||0, unit:l.unit||'', price:r2(l.price), amount:r2((+l.qty||0)*(+l.price||0)), lk:l.lk||'', reqId:l.reqId||'', reqNo:l.reqNo||'', sampleId:l.sampleId||''})),
+      locks: keys, sampleCount: keys.length, total, currency:'USD', status:'issued', issuedAt:new Date().toISOString(),
+      seller:{name:bset.seller||'', address:bset.address||'', phone:bset.phone||'', email:bset.email||'', remit:bset.remit||''},
+    };
+    await set(ref(db, `${ROOT}/invoices/${no}`), inv);
+    setSync('on'); showToast(t('iv.issued', no)); closeOv('invOverlay'); draft = null;
+    keys.forEach(k => blExcl.delete(k));
+    renderBilling();
+  } catch(e){
+    setSync('on'); showToast(t('iv.fail', e.message), true); btn.disabled=false; btn.textContent=t('iv.issue');
+  }
+};
+
+/* ── 발행 내역 ── */
+const IST = {issued:['#2563eb','#eff4ff'], paid:['#16a34a','#f0fdf4'], void:['#94a3b8','#f8fafc']};
+const istBadge = s => `<span class="badge" style="--cc:${IST[s]?.[0]||'#64748b'};--cb:${IST[s]?.[1]||'#f1f5f9'}">${t('is.'+s)}</span>`;
+function renderInvList(){
+  const q = $('ilText').value.trim().toLowerCase(), fs = $('ilStatus').value;
+  const all = Object.values(invoices).filter(Boolean).sort((a,b)=>String(b.no).localeCompare(String(a.no)));
+  const rows = all.filter(v => (!fs || v.status===fs) && (!q || [v.no, v.billTo?.company, v.billTo?.purTeam, v.billTo?.contact, v.billTo?.email, v.po, ...(v.reqNos||[])].join(' ').toLowerCase().includes(q)));
+  const sum = s => all.filter(v=>v.status===s).reduce((a,v)=>a+(+v.total||0),0);
+  $('ilStats').innerHTML = [[t('il.sumOpen'), money(sum('issued'))], [t('il.sumPaid'), money(sum('paid'))]].map(([l,v])=>`<div class="stat-chip"><span style="color:var(--text3);font-size:11px">${l}</span><span class="stat-val">${v}</span></div>`).join('');
+  $('ilBody').innerHTML = rows.length ? rows.map(v => `<tr${v.status==='void'?' class="voidrow"':''}>
+    <td class="mono"><b>${escH(v.no)}</b></td><td class="mono">${escH(v.date)}</td>
+    <td>${escH(v.billTo?.company||'')} · ${escH(v.billTo?.purTeam||'')}<div class="note">${escH(v.billTo?.contact||'')} &lt;${escH(v.billTo?.email||'')}&gt;</div></td>
+    <td>${escH(v.po||'')}</td><td class="mono" style="font-size:11px">${escH(v.period?.from||'')}~${escH(v.period?.to||'')}</td>
+    <td class="num">${v.sampleCount||0}</td><td class="num">${money(v.total)}</td><td>${istBadge(v.status)}${v.status==='void'&&v.voidReason?`<div class="note">${escH(v.voidReason)}</div>`:''}</td>
+    <td style="white-space:nowrap"><button class="btn ghost sm" onclick="printInv('${escH(v.no)}')">${t('il.print')}</button>
+      <button class="btn ghost sm" onclick="xlsxInv('${escH(v.no)}')">${t('il.xlsx')}</button>
+      ${v.status!=='void'?`<button class="btn ghost sm" onclick="mailInv('${escH(v.no)}')">${t('il.mail')}</button>
+      <button class="btn ghost sm" onclick="paidInv('${escH(v.no)}')">${v.status==='paid'?t('il.unpaid'):t('il.paid')}</button>
+      <button class="btn danger sm" onclick="voidInv('${escH(v.no)}')">${t('il.void')}</button>`:''}</td></tr>`).join('')
+    : `<tr><td colspan="9"><div class="empty"><div class="empty-icon">🧾</div>${t('il.empty')}</div></td></tr>`;
+}
+window.renderInvList = renderInvList;
+window.paidInv = async no => {
+  const v = invoices[no]; if (!v || v.status==='void') return;
+  const paid = v.status!=='paid';
+  await guard(()=>update(ref(db, `${ROOT}/invoices/${no}`), {status:paid?'paid':'issued', paidAt:paid?TODAY:null}), paid?t('t.paid'):t('t.unpaid'));
+};
+window.voidInv = async no => {
+  const v = invoices[no]; if (!v || v.status==='void') return;
+  const reason = prompt(t('c.void', no)); if (reason===null) return;
+  await guard(async () => {
+    await runTransaction(billRef, cur => {
+      cur = cur || {}; const locks = {...(cur.locks||{})};
+      (v.locks||[]).forEach(k => { if (locks[k]===no) delete locks[k]; });
+      return {...cur, locks};
+    }, {applyLocally:false});
+    await update(ref(db, `${ROOT}/invoices/${no}`), {status:'void', voidedAt:new Date().toISOString(), voidReason:reason||''});
+  }, t('t.voided', no));
+};
+
+/* ── 출력: 인쇄(PDF 저장) · 엑셀 · 메일 (고객용이므로 영문 고정) ── */
+function invHtml(v){
+  const s = v.seller||{}, b = v.billTo||{};
+  const nl = x => escH(x||'').replace(/\n/g,'<br>');
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escH(v.no)}</title><style>
+    body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:32px;font-size:12px}h1{font-size:26px;letter-spacing:2px;margin:0;color:#4c1d95}
+    .top{display:flex;justify-content:space-between;gap:24px;margin-bottom:22px}.box{border:1px solid #ccc;padding:10px 12px;border-radius:4px}
+    .lbl{font-size:10px;color:#666;font-weight:bold;text-transform:uppercase;margin-bottom:3px}table{width:100%;border-collapse:collapse;margin-top:14px}
+    th{background:#f2f0f8;text-align:left;padding:7px;border-bottom:2px solid #4c1d95;font-size:11px}td{padding:6px 7px;border-bottom:1px solid #e5e5e5}
+    .n{text-align:right;white-space:nowrap}.tot td{font-weight:bold;font-size:14px;border-top:2px solid #111;border-bottom:none}
+    .meta td{border:none;padding:2px 8px 2px 0}.void{color:#b91c1c;font-size:20px;font-weight:bold;border:3px solid #b91c1c;display:inline-block;padding:4px 14px;transform:rotate(-6deg)}
+    @media print{body{margin:14mm}}</style></head><body>
+    <div class="top"><div><h1>INVOICE</h1><div style="margin-top:10px"><b>${escH(s.name)}</b><br>${nl(s.address)}${s.phone?'<br>'+escH(s.phone):''}${s.email?'<br>'+escH(s.email):''}</div></div>
+      <div><table class="meta"><tr><td class="lbl">Invoice No.</td><td><b>${escH(v.no)}</b></td></tr><tr><td class="lbl">Date</td><td>${escH(v.date)}</td></tr>
+      <tr><td class="lbl">Terms</td><td>Net ${+v.terms||0}</td></tr><tr><td class="lbl">Due Date</td><td>${escH(v.dueDate)}</td></tr>${v.po?`<tr><td class="lbl">Customer PO</td><td>${escH(v.po)}</td></tr>`:''}
+      <tr><td class="lbl">Service Period</td><td>${escH(v.period?.from||'')} ~ ${escH(v.period?.to||'')}</td></tr></table>${v.status==='void'?'<div class="void">VOID</div>':''}</div></div>
+    <div class="box" style="max-width:360px"><div class="lbl">Bill To</div><b>${escH(b.company)}</b>${b.purTeam?'<br>'+escH(b.purTeam):''}${b.contact?'<br>Attn: '+escH(b.contact):''}${b.email?'<br>'+escH(b.email):''}</div>
+    <table><thead><tr><th style="width:30px">#</th><th>Description</th><th>Request No.</th><th class="n">Qty</th><th class="n">Unit Price</th><th class="n">Amount</th></tr></thead><tbody>
+    ${(v.lines||[]).map((l,i)=>`<tr><td>${i+1}</td><td>${escH(l.desc)}</td><td>${escH(l.reqNo||'')}</td><td class="n">${l.qty}</td><td class="n">${money(l.price)}</td><td class="n">${money(l.amount)}</td></tr>`).join('')}
+    <tr class="tot"><td colspan="5" class="n">TOTAL (USD)</td><td class="n">${money(v.total)}</td></tr></tbody></table>
+    ${v.notes?`<p style="margin-top:16px"><b>Notes:</b> ${escH(v.notes)}</p>`:''}${s.remit?`<div class="box" style="margin-top:16px"><div class="lbl">Remittance</div>${nl(s.remit)}</div>`:''}
+    <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
+}
+window.printInv = no => { const v=invoices[no]; if (!v) return; const w=window.open('', '_blank'); if (!w){ showToast('Popup blocked', true); return; } w.document.write(invHtml(v)); w.document.close(); };
+window.xlsxInv = no => {
+  const v=invoices[no]; if (!v || !window.XLSX) return; const b=v.billTo||{}, s=v.seller||{};
+  const aoa = [['INVOICE'],[],['Seller', s.name||''],['', (s.address||'').replace(/\n/g,', ')],['Invoice No.', v.no],['Date', v.date],['Terms', `Net ${+v.terms||0}`],['Due Date', v.dueDate],['Customer PO', v.po||''],['Service Period', `${v.period?.from||''} ~ ${v.period?.to||''}`],
+    [],['Bill To', b.company||''],['Purchasing Team', b.purTeam||''],['Attn', b.contact||''],['E-mail', b.email||''],[],
+    ['#','Description','Request No.','Sample ID','Qty','Unit Price (USD)','Amount (USD)'],
+    ...(v.lines||[]).map((l,i)=>[i+1, l.desc, l.reqNo||'', l.sampleId||'', l.qty, l.price, l.amount]),
+    ['','','','','','TOTAL', v.total], [], ...(v.notes?[['Notes', v.notes]]:[]), ...(s.remit?[['Remittance', s.remit.replace(/\n/g,', ')]]:[]), ...(v.status==='void'?[['STATUS','VOID']]:[])];
+  const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=[{wch:16},{wch:58},{wch:16},{wch:16},{wch:8},{wch:16},{wch:16}];
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Invoice'); XLSX.writeFile(wb, `${v.no}.xlsx`);
+};
+window.mailInv = no => {
+  const v=invoices[no]; if (!v) return; const b=v.billTo||{};
+  const body = `Dear ${b.contact||'Sir/Madam'},\n\nPlease find attached invoice ${v.no} for analysis services (${v.period?.from||''} ~ ${v.period?.to||''}).\n\nInvoice No.: ${v.no}\nAmount: ${money(v.total)} USD\nDue Date: ${v.dueDate}${v.po?`\nCustomer PO: ${v.po}`:''}\nRequest No.: ${(v.reqNos||[]).join(', ')}\n\nBest regards,\n${v.seller?.name||''}`;
+  location.href = `mailto:${encodeURIComponent(b.email||'')}?subject=${encodeURIComponent(`Invoice ${v.no} - ${v.seller?.name||''} Analysis Services`)}&body=${encodeURIComponent(body)}`;
+};
+
+/* ── 단가표 ── */
+function renderPrices(){
+  const rows = Object.entries(prices).filter(([,p])=>p).sort((a,b)=>[a[1].item,a[1].company,a[1].mat].join('|').localeCompare([b[1].item,b[1].company,b[1].mat].join('|')));
+  const rowHtml = (id, p) => `<tr data-id="${escH(id)}">
+    <td><input class="cell" data-k="company" value="${escH(p.company||'')}" list="dlCompany"></td><td><input class="cell" data-k="mat" value="${escH(p.mat||'')}" list="dlMat"></td>
+    <td><input class="cell" data-k="item" value="${escH(p.item||'')}" list="dlItems"></td>
+    <td><select class="cell" data-k="per"><option value="sample"${p.per!=='container'?' selected':''}>${t('pr.perS')}</option><option value="container"${p.per==='container'?' selected':''}>${t('pr.perC')}</option></select></td>
+    <td><input class="cell num" data-k="price" type="number" min="0" step="0.01" value="${escH(p.price??'')}" style="width:100px"></td><td><input class="cell" data-k="note" value="${escH(p.note||'')}"></td>
+    <td style="white-space:nowrap"><button class="btn sm" onclick="savePrice(this)">${t('btn.save')}</button>${id?` <button class="btn danger sm" onclick="delPrice('${escH(id)}')">${t('btn.del')}</button>`:''}</td></tr>`;
+  $('prBody').innerHTML = rows.map(([id,p])=>rowHtml(id,p)).join('') + rowHtml('', {per:'sample', item:'ICP-MS'});
+}
+const rowVals = tr => Object.fromEntries([...tr.querySelectorAll('[data-k]')].map(e=>[e.dataset.k, e.value.trim()]));
+window.savePrice = async btn => {
+  const tr = btn.closest('tr'), v = rowVals(tr), id = tr.dataset.id;
+  if (!v.item || v.price===''){ showToast(t('t.prNeed'), true); return; }
+  const p = {company:v.company, mat:v.mat, item:v.item, per:v.per==='container'?'container':'sample', price:r2(v.price), note:v.note, updatedAt:new Date().toISOString()};
+  await guard(()=> id ? set(ref(db, `${ROOT}/prices/${id}`), p) : push(prRef, p), t('t.prSaved'));
+};
+window.delPrice = async id => { if (!confirm(t('c.prDel'))) return; await guard(()=>remove(ref(db, `${ROOT}/prices/${id}`)), t('t.deleted')); };
+
+/* ── 청구 담당자 ── */
+function ctUsage(){
+  const n = {};
+  reqEntries().forEach(([id,r]) => (r.samples||[]).forEach(s => { if (!s || lockOf(id,s)) return; const k = billOf(r,s).key; if (k) n[k]=(n[k]||0)+1; }));
+  return n;
+}
+function renderContacts(){
+  const use = ctUsage();
+  const rows = Object.entries(contacts).filter(([,c])=>c).sort((a,b)=>ctLabelFull(a[1]).localeCompare(ctLabelFull(b[1])));
+  const rowHtml = (id, c) => `<tr data-id="${escH(id)}">${['company','division','dept','purTeam','contact','email','note'].map(k=>`<td><input class="cell" data-k="${k}" value="${escH(c[k]||'')}"${k==='company'?' list="dlCompany"':''}${k==='email'?' type="email" style="min-width:190px"':''}></td>`).join('')}
+    <td class="num">${id?(use[id]||0):''}</td>
+    <td style="white-space:nowrap"><button class="btn sm" onclick="saveContact(this)">${t('btn.save')}</button>${id?` <button class="btn danger sm" onclick="delContact('${escH(id)}')">${t('btn.del')}</button>`:''}</td></tr>`;
+  $('ctBody').innerHTML = rows.map(([id,c])=>rowHtml(id,c)).join('') + rowHtml('', {});
+}
+window.saveContact = async btn => {
+  const tr = btn.closest('tr'), v = rowVals(tr), id = tr.dataset.id;
+  if (!v.company || !v.email){ showToast(t('t.ctNeed'), true); return; }
+  const k = ctKey(v);
+  if (k!==id && contacts[k]){ showToast(t('t.ctDup'), true); return; }
+  const c = {...v, updatedAt:new Date().toISOString()};
+  await guard(async () => {
+    if (!id || id===k) { await update(ref(db, `${ROOT}/contacts/${k}`), c); return; }
+    // 키가 바뀜(회사·공정·부서·구매팀 수정) → 새 키로 옮기고, 이 담당자를 지정한 미청구 샘플도 새 키로
+    const ch = {[`contacts/${k}`]:c, [`contacts/${id}`]:null};
+    reqEntries().forEach(([rid,r]) => (r.samples||[]).forEach((s,i) => { if (s && s.billKey===id && !lockOf(rid,s)) ch[`requests/${rid}/samples/${i}/billKey`] = k; }));
+    await update(ref(db, ROOT), ch);
+  }, t('t.ctSaved'));
+};
+window.delContact = async id => {
+  const c = contacts[id]; if (!c) return; const n = ctUsage()[id]||0;
+  if (n){ showToast(t('t.ctInUse', n), true); return; }
+  if (!confirm(t('c.ctDel', ctLabelFull(c)))) return;
+  await guard(()=>remove(ref(db, `${ROOT}/contacts/${id}`)), t('t.deleted'));
+};
+window.collectContacts = async () => {
+  const add = {};
+  reqEntries().forEach(([,r]) => {
+    if (!r.company || !r.purEmail) return;
+    const c = {company:r.company, division:r.division||'', dept:r.dept||'', purTeam:r.purTeam||'', contact:r.purContact||'', email:r.purEmail||'', note:'from requests'};
+    const k = ctKey(c); if (!contacts[k] && !add[k]) add[k] = c;
+  });
+  const n = Object.keys(add).length;
+  if (n) await guard(()=>update(ctRef, add), t('t.ctCollected', n)); else showToast(t('t.ctCollected', 0));
+};
+
+/* ── 청구 설정 ── */
+function loadBsForm(){
+  if (!$('bsPrefix')) return;
+  $('bsPrefix').value=bset.prefix||''; $('bsTerms').value=bset.terms??''; $('bsPre').value=bset.pretreat??''; $('bsUrg').value=bset.urgentPct??'';
+  $('bsByPo').checked=bset.byPo!==false; $('bsSeller').value=bset.seller||''; $('bsAddr').value=bset.address||''; $('bsPhone').value=bset.phone||''; $('bsEmail').value=bset.email||''; $('bsRemit').value=bset.remit||'';
+}
+window.saveBset = () => guard(()=>set(bsRef, {
+  prefix: $('bsPrefix').value.trim().replace(/[.#$\[\]\/\s]/g,'-'), terms: Math.max(0, +$('bsTerms').value||0), pretreat: Math.max(0, +$('bsPre').value||0), urgentPct: Math.max(0, +$('bsUrg').value||0),
+  byPo: $('bsByPo').checked, seller: $('bsSeller').value.trim(), address: $('bsAddr').value.trim(), phone: $('bsPhone').value.trim(), email: $('bsEmail').value.trim(), remit: $('bsRemit').value.trim(),
+}), t('t.bsSaved'));
+
+/* 기간 기본값: 이번 달 */
+(() => { const y=today.getFullYear(), m=today.getMonth(); $('blFrom').value=ymd(new Date(y,m,1)); $('blTo').value=ymd(new Date(y,m+1,0)); })();
+/*BILLING_END*/
+
 
 /* ── 시작 ── */
 loadSettingsForm();
