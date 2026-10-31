@@ -228,6 +228,14 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
 .cell:focus{outline:none;border-color:var(--accent);}.cell.num{text-align:right;font-family:'IBM Plex Mono',monospace;}
 .inv-total{font-size:14px;color:var(--text2);}.inv-total b{font-family:'IBM Plex Mono',monospace;font-size:18px;color:var(--text);margin-left:8px;}
 .tbl a{color:var(--accent);text-decoration:none;font-weight:700;}
+.code-b{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:5px;background:var(--cc);color:#fff;font:700 11px 'IBM Plex Mono',monospace;vertical-align:middle;margin-right:4px;}
+.code-b.big{min-width:34px;height:34px;font-size:16px;border-radius:8px;margin-right:10px;}
+.cbtn{display:inline-flex;align-items:center;gap:5px;border:1.5px solid var(--border);background:var(--white);border-radius:8px;padding:4px 10px 4px 5px;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.cbtn.on{border-color:var(--accent);background:var(--accent-l);color:var(--accent);}.cbtn .cnt{font-family:'IBM Plex Mono',monospace;font-weight:600;}
+.pill.red{background:var(--red-l);color:#991b1b;}
+.sec-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;margin:6px 0 10px;color:var(--text2);}
+details.open-sec>summary{cursor:pointer;list-style:none;}details.open-sec>summary::-webkit-details-marker{display:none;}
+.stat-chip.clk{cursor:pointer;}.stat-chip.clk:hover{background:var(--accent-l);}
 .pattern-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-l);border:1px solid #ddd6fe;border-radius:4px;padding:1px 6px;}
 tr.off td{opacity:.45;}
 
@@ -369,7 +377,11 @@ tr.off td{opacity:.45;}
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
         <div class="totals" id="smpTotals"></div>
-        <button class="btn ghost sm" onclick="addSampleRow()" style="margin-top:10px" data-i18n="ed.addRow"></button>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px">
+          <span class="note" data-i18n="ed.bulkBill"></span><select class="sel bill-sel" id="edBulkBill" style="width:auto;max-width:360px"></select>
+          <button class="btn ghost sm" onclick="applyBulkBill()" data-i18n="ed.bulkApply"></button>
+          <button class="btn ghost sm" onclick="addSampleRow()" data-i18n="ed.addRow"></button>
+        </div>
       </div>
       <datalist id="dlMat"><option>HF</option><option>HCl</option><option>HNO3</option><option>KOH</option><option>Polysilicon (Surface)</option><option>Polysilicon (Bulk)</option><option>UPW</option><option>Wafer</option><option>Other</option></datalist>
       <datalist id="dlCont"><option>Bottle</option><option>PFA Bottle</option><option>Vinyl bag</option><option>Glass Bottle</option><option>Vial</option><option>Other</option></datalist>
@@ -418,27 +430,33 @@ tr.off td{opacity:.45;}
 
     <div id="bl-cand">
       <div class="filter-row">
-        <span class="note" data-i18n="bl.period"></span>
-        <input class="inp" type="date" id="blFrom" onchange="renderBilling()"> ~ <input class="inp" type="date" id="blTo" onchange="renderBilling()">
-        <button class="btn ghost sm" onclick="blPeriod('last')" data-i18n="bl.lastM"></button>
-        <button class="btn ghost sm" onclick="blPeriod('this')" data-i18n="bl.thisM"></button>
+        <span class="note" style="font-weight:700;color:var(--text2)" data-i18n="bl.cutoff"></span>
+        <input class="inp" type="date" id="blTo" onchange="renderBilling()">
+        <button class="btn ghost sm" onclick="blCut('lastEnd')" data-i18n="bl.lastEnd"></button>
+        <button class="btn ghost sm" onclick="blCut('thisEnd')" data-i18n="bl.thisEnd"></button>
+        <button class="btn ghost sm" onclick="blCut('today')" data-i18n="cal.today"></button>
         <span class="note" data-i18n="bl.basis"></span>
         <select class="sel" id="blBasis" onchange="renderBilling()"><option value="sent" data-i18n="bl.bSent"></option><option value="received" data-i18n="bl.bRec"></option><option value="due" data-i18n="bl.bDue"></option></select>
         <select class="sel" id="blCo" onchange="renderBilling()"></select>
+        <span class="note" data-i18n="bl.fromOpt"></span>
+        <input class="inp" type="date" id="blFrom" onchange="renderBilling()" style="width:auto"><button class="btn ghost sm" onclick="blClearFrom()" title="clear">✕</button>
         <label class="note" style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="blShowBilled" onchange="renderBilling()"><span data-i18n="bl.showBilled"></span></label>
       </div>
-      <div class="stats-row" id="blStats" style="margin-bottom:12px"></div>
+      <div class="note" style="margin:-6px 0 10px" data-i18n-html="bl.cutNote"></div>
+      <div class="stats-row" id="blStats" style="margin-bottom:10px"></div>
+      <div class="filter-row" id="blCodes" style="margin-bottom:12px"></div>
       <div id="blGroups"></div>
     </div>
 
     <div id="bl-inv" style="display:none">
       <div class="filter-row">
         <input class="inp" id="ilText" data-i18n-ph="il.search" oninput="renderInvList()" style="min-width:240px">
+        <select class="sel" id="ilCode" onchange="renderInvList()"></select>
         <select class="sel" id="ilStatus" onchange="renderInvList()"><option value="" data-i18n="il.all"></option><option value="issued" data-i18n="is.issued"></option><option value="paid" data-i18n="is.paid"></option><option value="void" data-i18n="is.void"></option></select>
         <span class="sp"></span><div class="stats-row" id="ilStats"></div>
       </div>
       <div class="tbl-wrap"><table class="tbl"><thead><tr>
-        <th data-i18n="il.no"></th><th data-i18n="il.date"></th><th data-i18n="il.billTo"></th><th>PO</th><th data-i18n="bl.period"></th><th class="num" data-i18n="il.smp"></th><th class="num" data-i18n="il.amt"></th><th data-i18n="il.status"></th><th></th>
+        <th data-i18n="il.no"></th><th data-i18n="il.date"></th><th data-i18n="ct.code"></th><th data-i18n="il.billTo"></th><th>PO</th><th data-i18n="bl.period"></th><th class="num" data-i18n="il.smp"></th><th class="num" data-i18n="il.amt"></th><th data-i18n="il.status"></th><th></th>
       </tr></thead><tbody id="ilBody"></tbody></table></div>
     </div>
 
@@ -459,7 +477,7 @@ tr.off td{opacity:.45;}
           <button class="btn ghost sm" onclick="collectContacts()" data-i18n="ct.fromReq"></button>
         </div>
         <div class="tbl-wrap" style="box-shadow:none"><table class="tbl mini"><thead><tr>
-          <th data-i18n="ct.co"></th><th data-i18n="ct.div"></th><th data-i18n="ct.dept"></th><th data-i18n="ct.team"></th><th data-i18n="ct.name"></th><th data-i18n="ct.email"></th><th data-i18n="ct.note"></th><th class="num" data-i18n="ct.used"></th><th></th>
+          <th data-i18n="ct.code"></th><th data-i18n="ct.co"></th><th data-i18n="ct.div"></th><th data-i18n="ct.dept"></th><th data-i18n="ct.team"></th><th data-i18n="ct.name"></th><th data-i18n="ct.email"></th><th data-i18n="ct.note"></th><th class="num" data-i18n="ct.used"></th><th></th>
         </tr></thead><tbody id="ctBody"></tbody></table></div>
       </div>
     </div>
@@ -1106,7 +1124,7 @@ window.openReq = (id, ev) => {
   openReqId = id; closeOv('dayOverlay');
   const mark = (cls, txt) => `<span class="st ${cls}" style="padding:1px 6px;border-radius:4px">${txt}</span>`;
   $('reqTitle').textContent = r.reqNo || t('noNo');
-  $('reqSub').innerHTML = `${escH(deptLabel(r))} · ${stageBadge(r.stage)} ${isUrgent(r)?mark('urg',t('mk.urg')):''} ${isLate(r)?mark('late',t('mk.lateDays',-diffDays(r.dueDate))):''}`;
+  $('reqSub').innerHTML = `${codeList(reqCodes(r))} ${escH(deptLabel(r))} · ${stageBadge(r.stage)} ${isUrgent(r)?mark('urg',t('mk.urg')):''} ${isLate(r)?mark('late',t('mk.lateDays',-diffDays(r.dueDate))):''}`;
   const log = r.stageLog||{};
   const curIdx = FLOW.findIndex(s=>s.k===r.stage);
   const stepper = FLOW.map((s,i)=>`<button class="step${i<curIdx?' past':''}${i===curIdx?' cur':''}" style="${sv(s)}" onclick="setStage('${id}','${s.k}')" title="${escH(L2(s.d))}">${escH(stName(s.k))}<small>${log[s.k]?fmtMD(log[s.k].slice(0,10)):'&nbsp;'}</small></button>`).join('') +
@@ -1127,7 +1145,7 @@ window.openReq = (id, ev) => {
     <div class="sec-h">${t('smp.sum', smp.length, smp.reduce((a,s)=>a+(+s.qty||0),0), smp.filter(s=>s.pre==='Y').length)}</div>
     <div class="tbl-wrap" style="box-shadow:none"><table class="tbl mini"><thead><tr><th>#</th>${['id','mat','lot','cont','vol','qty','sdate','items','pre','rmk','bill','inv'].map(k=>`<th${k==='vol'||k==='qty'?' class="num"':''}>${t('s.'+k)}</th>`).join('')}</tr></thead>
       <tbody>${smp.length?smp.map((s,i)=>{ const b=billOf(r,s), inv=lockOf(id,s); return `<tr><td class="muted">${i+1}</td><td><b>${escH(s.id)}</b></td><td>${escH(s.mat)}</td><td class="mono">${escH(s.lot)}</td><td>${escH(s.cont)}</td><td class="num">${escH(s.vol)}</td><td class="num">${escH(s.qty)}</td><td>${escH(s.sdate)}</td><td>${escH(s.items)}</td><td>${escH(s.pre)}</td><td>${escH(s.rmk)}</td>
-        <td>${b.missing?`<span class="pill warn">${t('bl.ctMissing')}</span>`:b.email?`${escH(ctLabel(b))}${s.billKey?'':' <span class="note">('+t('ct.dept')+')</span>'}`:`<span class="pill warn">${t('bl.st.noContact')}</span>`}</td>
+        <td>${b.missing?`<span class="pill warn">${t('bl.ctMissing')}</span>`:b.email?`${codeBadge(b.code)}${escH(ctLabel(b))}${s.billKey?'':' <span class="note">('+t('ct.dept')+')</span>'}`:`<span class="pill warn">${t('bl.st.noContact')}</span>`}</td>
         <td>${inv?`<span class="pill lock">🔒 ${escH(inv)}</span>`:''}</td></tr>`; }).join(''):`<tr><td colspan="13" class="muted">${t('smp.none')}</td></tr>`}</tbody></table></div>
     <div class="sec-h">${t('sec.trans')}</div>
     ${kv([['delivery',r.delivery],['shipDate',r.shipDate],['storage',r.storage],['tracking',r.tracking],['address',r.address],['hazmat',r.hazmat],['after',r.after]])}
@@ -1183,7 +1201,7 @@ window.renderList = () => {
     const tt=tat(r);
     return `<tr class="click" onclick="openReq('${id}')">
       <td class="mono"><b>${escH(r.reqNo||'-')}</b>${isUrgent(r)?` <span class="st urg" style="padding:0 4px;border-radius:3px">${t('mk.urg')}</span>`:''}</td>
-      <td>${escH(deptLabel(r))}</td><td>${escH(mats(r)||'-')}</td><td class="num">${smpCount(r)}</td><td>${escH(items(r)||'-')}</td>
+      <td>${codeList(reqCodes(r))}${escH(deptLabel(r))}</td><td>${escH(mats(r)||'-')}</td><td class="num">${smpCount(r)}</td><td>${escH(items(r)||'-')}</td>
       <td class="mono">${escH(r.receivedDate||'-')}</td><td class="mono">${escH(r.plannedDate||'-')}</td><td class="mono">${escH(r.dueDate||'-')}</td>
       <td class="dday ${ddc}">${ddt}</td><td>${stageBadge(r.stage)}</td><td>${escH(r.analyst||'')}</td><td class="num">${tt===null?'':t('days',tt)}</td></tr>`;
   }).join('') : `<tr><td colspan="12"><div class="empty"><div class="empty-icon">📭</div>${t('list.empty')}</div></td></tr>`;
@@ -1271,10 +1289,16 @@ function renderSamples(){
   $('smpBody').innerHTML = edSamples.map((s,i)=>`<tr><td class="muted">${i+1}</td>${SMP_COLS.map(([k,ty,dl])=>
     ty==='sel' ? `<td><select onchange="smpSet(${i},'${k}',this.value)"><option${s[k]==='N'?' selected':''}>N</option><option${s[k]==='Y'?' selected':''}>Y</option></select></td>`
     : `<td><input type="${ty}" value="${escH(s[k])}"${dl?` list="${dl}"`:''} oninput="smpSet(${i},'${k}',this.value)"${k==='id'?' style="min-width:110px"':''}></td>`).join('')}
-    <td>${(edId && lockOf(edId, s)) ? `<span class="pill lock">🔒 ${escH(lockOf(edId, s))}</span>` : `<select class="bill-sel" onchange="smpSet(${i},'billKey',this.value)">${contactOptions(getEd('company'), s.billKey||'', reqDefaultLabel(edReqForBill()))}</select>`}</td>
+    <td>${(edId && lockOf(edId, s)) ? `<span class="pill lock">🔒 ${escH(lockOf(edId, s))}</span>` : `<div style="display:flex;align-items:center">${(()=>{ const b=billOf(edReqForBill(), s); return b.missing||!b.email ? '<span class="pill warn" style="padding:1px 6px;margin-right:4px">?</span>' : codeBadge(b.code); })()}<select class="bill-sel" onchange="smpSet(${i},'billKey',this.value);renderSamples()">${contactOptions(getEd('company'), s.billKey||'', reqDefaultLabel(edReqForBill()))}</select></div>`}</td>
     <td><button class="icon-btn" style="position:static" onclick="delSampleRow(${i})" title="${t('ed.delRow')}">×</button></td></tr>`).join('');
-  smpTotals();
+  smpTotals(); fillBulkBill();
 }
+function fillBulkBill(){ const el=$('edBulkBill'); if (el) el.innerHTML = contactOptions(getEd('company'), '', reqDefaultLabel(edReqForBill())); }
+window.applyBulkBill = () => {
+  const k = $('edBulkBill').value; let n = 0;
+  edSamples.forEach(s => { if (edId && lockOf(edId, s)) return; s.billKey = k; n++; });
+  renderSamples(); showToast(t('t.bulkBill', n));
+};
 function smpTotals(){
   const v = edSamples.filter(s=>s.id||s.mat||s.lot);
   $('smpTotals').innerHTML = t('ed.totals', v.length, v.reduce((a,s)=>a+(+s.qty||0),0), v.filter(s=>s.pre==='Y').length, v.reduce((a,s)=>a+(+s.vol||0)*(+s.qty||0),0).toLocaleString());
@@ -1297,6 +1321,8 @@ window.saveRequest = async () => {
   if (r.samples.some(s=>!s.id)){ showToast(t('t.needId'), true); return; }
   if (!r.samples.length && !confirm(t('c.noSamples'))) return;
   r.samples.forEach(s => { if (!s.uid) s.uid = newUid(); if (!s.billKey) s.billKey = ''; });
+  const noBill = r.samples.filter(s => { const b = billOf(r, s); return b.missing || !String(b.email||'').trim(); });
+  if (noBill.length && !confirm(t('c.noBill', noBill.length, noBill.map(s=>s.id).join(', ')))) return;
   if (edId){   // 이미 청구된 샘플은 지울 수 없고, 내용이 바뀌면 경고
     const prevS = requests[edId]?.samples || [], uids = new Set(r.samples.map(s=>s.uid));
     const gone = prevS.filter(s => s && lockOf(edId, s) && !uids.has(s.uid));
@@ -1590,6 +1616,19 @@ window.saveSettings = () => guard(()=>set(setRef, {
    · 잘못 발행한 인보이스는 삭제하지 않고 Void → 잠금만 풀려 다시 청구 가능, 이력은 남음.
 */
 Object.assign(I18N, {
+  'bl.cutoff':['기준일 (이 날짜까지)','Cut-off (up to)'],'bl.lastEnd':['지난달 말','End of last month'],'bl.thisEnd':['이번 달 말','End of this month'],
+  'bl.fromOpt':['시작일 (선택)','From (optional)'],
+  'bl.cutNote':['<b>기준일까지 결과가 나간 미청구 샘플을 날짜 제한 없이 모두</b> 보여줍니다. 지난달에 놓친 건도 자동으로 포함됩니다. 시작일은 꼭 필요할 때만 넣으세요.','Shows <b>every unbilled sample whose result went out by the cut-off</b>, with no start limit, so anything missed last month is included. Set a start date only if you really need one.'],
+  'bl.allCodes':['전체 그룹','All groups'],'bl.codeAll':['전체','All'],'bl.codeNone':['미지정','None'],
+  'bl.secOpen':['⏳ 진행 중 — 아직 결과 미발송 ({0}건) · 청구 담당자를 미리 확인하세요','⏳ In progress — result not sent yet ({0}) · check billing contacts ahead'],
+  'bl.secBill':['✅ 청구 가능','✅ Ready to bill'],
+  'bl.st.open':['미발송','Not sent'],'bl.st.noTeam':['구매팀 없음','No team'],'bl.st.noDate':['날짜 없음','No date'],'bl.ageD':['발송 {0}일','{0}d since sent'],
+  'bl.sum.noTeam':['⚠ 구매팀 없음','⚠ No team'],'bl.sum.noDate':['⚠ 기준 날짜 없음','⚠ No date'],'bl.sum.old':['⏰ 발송 30일+ 미청구','⏰ Unbilled 30d+'],
+  'bl.sum.open':['진행 중','In progress'],'bl.sum.after':['기준일 이후 발송','Sent after cut-off'],'bl.sum.before':['시작일 이전 미청구 (클릭=포함)','Unbilled before start (click to include)'],
+  'bl.h.rec':['접수일','Received'],'bl.h.stage':['단계','Stage'],
+  'ct.code':['코드','Code'],'t.ctCode':['코드는 영문 대문자 1~3자입니다 (비우면 자동)','Code must be 1–3 letters (blank = auto)'],'t.ctCodeDup':['코드 {0}는 이미 다른 담당자가 쓰고 있습니다','Code {0} is already used by another contact'],
+  'ed.bulkBill':['전체 샘플 청구 담당자','All samples billed to'],'ed.bulkApply':['전체 적용','Apply to all'],'t.bulkBill':['✓ 샘플 {0}건에 적용 (저장해야 반영)','✓ Applied to {0} sample(s) (save to keep)'],
+  'c.noBill':['청구 담당자(이메일)가 없는 샘플이 {0}건 있습니다: {1}\n이대로 저장하면 청구 화면에 "담당자 미지정"으로 표시됩니다. 저장할까요?','{0} sample(s) have no billing contact e-mail: {1}\nThey will show as "No contact" in Billing. Save anyway?'],
   'tab.billing':['💵 청구','💵 Billing'],
   'bl.vCand':['📄 청구 대상','📄 To bill'],'bl.vInv':['🧾 발행 내역','🧾 Invoices'],'bl.vPrice':['💲 단가표','💲 Price list'],'bl.vCt':['👤 청구 담당자','👤 Billing contacts'],'bl.vSet':['⚙ 청구 설정','⚙ Billing settings'],
   'bl.period':['기간','Period'],'bl.basis':['기준일','Based on'],'bl.bSent':['결과 발송일','Result sent'],'bl.bRec':['접수일','Received'],'bl.bDue':['결과 약속일','Due date'],
@@ -1669,6 +1708,29 @@ const lockOf = (reqId, s) => s && s.uid ? (billing.locks||{})[lockKey(reqId, s)]
 const ctLabel = c => [c.purTeam || [c.division,c.dept].filter(Boolean).join(' '), c.contact].filter(Boolean).join(' · ') + (c.email?` <${c.email}>`:'');
 const ctLabelFull = c => `${c.company||'-'} · ${ctLabel(c)}`;
 
+/* ── 청구 담당자 코드 (A, B, C … Z, AA …) ── */
+const CODE_COLORS = ['#2563eb','#db2777','#16a34a','#ea580c','#7c3aed','#0891b2','#b45309','#dc2626','#4f46e5','#0d9488','#9333ea','#475569'];
+function codeName(i){ let x=''; i++; while (i>0){ const m=(i-1)%26; x=String.fromCharCode(65+m)+x; i=Math.floor((i-1)/26); } return x; }
+function codeIndex(c){ let n=0; for (const ch of String(c)) n = n*26 + (ch.charCodeAt(0)-64); return n-1; }
+const codeSort = (a,b) => a.length-b.length || a.localeCompare(b);
+const codeColor = c => CODE_COLORS[Math.max(0,codeIndex(c)) % CODE_COLORS.length];
+const codeBadge = (c, big) => c ? `<span class="code-b${big?' big':''}" style="--cc:${codeColor(c)}">${escH(c)}</span>` : '';
+const invCode = v => v.billTo?.code || (v.billTo?.key && contacts[v.billTo.key]?.code) || '';
+let codeBusy = false;
+/* 코드 없는 담당자에게 자동 부여(만든 순서대로), 중복 코드는 나중 것만 새 코드로 — 여러 사람이 동시에 열어도 같은 결과 */
+async function ensureCodes(){
+  if (codeBusy) return;
+  const ents = Object.entries(contacts).filter(([,c])=>c).sort((a,b)=>String(a[1].createdAt||a[1].updatedAt||'').localeCompare(String(b[1].createdAt||b[1].updatedAt||'')) || a[0].localeCompare(b[0]));
+  const used = new Set(ents.map(([,c])=>String(c.code||'').toUpperCase()).filter(Boolean)), seen = new Set(), ch = {};
+  ents.forEach(([k,c]) => {
+    const cd = String(c.code||'').toUpperCase();
+    if (cd && /^[A-Z]{1,3}$/.test(cd) && !seen.has(cd)) { seen.add(cd); if (cd!==c.code) ch[`${k}/code`]=cd; return; }
+    let i=0, n; do { n=codeName(i++); } while (used.has(n)); used.add(n); seen.add(n); ch[`${k}/code`] = n;
+  });
+  if (!Object.keys(ch).length) return;
+  codeBusy = true; try { await update(ctRef, ch); } catch(e){} codeBusy = false;
+}
+
 /* 샘플 → 청구 담당자: 샘플 지정 > 요청 부서(목록 우선, 없으면 의뢰서 값) */
 function billOf(r, s){
   if (s && s.billKey){
@@ -1680,16 +1742,18 @@ function billOf(r, s){
   return {company:r.company, division:r.division, dept:r.dept, purTeam:r.purTeam, contact:r.purContact, email:r.purEmail, key:'', src:'req'};
 }
 function contactOptions(company, sel, defLabel){
-  const all = Object.entries(contacts).filter(([,c])=>c).sort((a,b)=>ctLabelFull(a[1]).localeCompare(ctLabelFull(b[1])));
+  const all = Object.entries(contacts).filter(([,c])=>c).sort((a,b)=>codeSort(a[1].code||'ZZZ', b[1].code||'ZZZ') || ctLabelFull(a[1]).localeCompare(ctLabelFull(b[1])));
   const mine = all.filter(([,c])=>!company || normS(c.company)===normS(company)), other = all.filter(x=>!mine.includes(x));
-  const opt = ([k,c]) => `<option value="${escH(k)}"${k===sel?' selected':''}>${escH(company && normS(c.company)===normS(company) ? ctLabel(c) : ctLabelFull(c))}</option>`;
+  const opt = ([k,c]) => `<option value="${escH(k)}"${k===sel?' selected':''}>${c.code?`[${escH(c.code)}] `:''}${escH(company && normS(c.company)===normS(company) ? ctLabel(c) : ctLabelFull(c))}</option>`;
   let h = `<option value=""${!sel?' selected':''}>${escH(defLabel)}</option>`;
   if (sel && !contacts[sel]) h += `<option value="${escH(sel)}" selected>${t('bl.ctMissing')}</option>`;
   h += mine.map(opt).join('');
   if (other.length) h += `<optgroup label="—">${other.map(opt).join('')}</optgroup>`;
   return h;
 }
-const reqDefaultLabel = r => { const b = billOf(r, {}); return b.email ? t('bl.defOpt', ctLabel(b)) : t('bl.defNone'); };
+const reqDefaultLabel = r => { const b = billOf(r, {}); return b.email ? t('bl.defOpt', (b.code?`[${b.code}] `:'') + ctLabel(b)) : t('bl.defNone'); };
+const reqCodes = r => [...new Set((r.samples||[]).map(s=>{ const b=billOf(r,s); return b.missing||!b.email ? '?' : (b.code||''); }).filter(Boolean))].sort(codeSort);
+const codeList = cs => cs.map(c => c==='?' ? `<span class="pill warn" style="padding:1px 6px">?</span>` : codeBadge(c)).join('');
 
 /* 단가 찾기: 회사+물질 > 회사 > 물질 > 공통 */
 function priceFor(company, mat, item){
@@ -1725,7 +1789,7 @@ const linesAmt = ls => r2(ls.reduce((a,l)=>a + r2((+l.qty||0)*(+l.price||0)), 0)
 const rerenderBill = () => { if ($('tab-billing') && $('tab-billing').style.display!=='none') renderBilling(); };
 onValue(billRef, s => { billing = {locks:{}, seq:{}, ...(s.val()||{})}; billing.locks ||= {}; rerenderBill(); if ($('reqOverlay').classList.contains('show') && openReqId) openReq(openReqId); }, onErr('billing'));
 onValue(invRef, s => { invoices = s.val()||{}; rerenderBill(); }, onErr('invoices'));
-onValue(ctRef, s => { contacts = s.val()||{}; rerenderBill(); if ($('tab-register').style.display!=='none') renderSamples(); }, onErr('contacts'));
+onValue(ctRef, s => { contacts = s.val()||{}; ensureCodes(); rerenderBill(); if ($('tab-list').style.display!=='none') renderList(); if ($('tab-register').style.display!=='none') renderSamples(); }, onErr('contacts'));
 onValue(prRef, s => { prices = s.val()||{}; rerenderBill(); }, onErr('prices'));
 onValue(bsRef, s => { bset = {...bset, ...(s.val()||{})}; loadBsForm(); rerenderBill(); }, onErr('billSettings'));
 Object.assign(I18N, {'r.billing':['청구 잠금','billing locks'],'r.invoices':['인보이스','invoices'],'r.contacts':['청구 담당자','contacts'],'r.prices':['단가표','prices'],'r.billSettings':['청구 설정','billing settings']});
@@ -1741,11 +1805,11 @@ async function ensureUids(){
 
 /* ── 의뢰서 Dept Master → 청구 담당자 목록 자동 추가 ── */
 async function upsertContactsFromForm(dmRows){
-  const add = {}, diffs = [];
-  (dmRows||[]).forEach(c => {
+  const add = {}, diffs = [], t0 = Date.now();
+  (dmRows||[]).forEach((c, ri) => {
     if (!c.company || !(c.email || c.contact)) return;
     const k = ctKey(c), ex = contacts[k];
-    if (!ex){ if (!add[k]) add[k] = {company:c.company, division:c.division||'', dept:c.dept||'', purTeam:c.purTeam||'', contact:c.contact||'', email:c.email||'', note:'Dept Master', createdAt:new Date().toISOString()}; }
+    if (!ex){ if (!add[k]) add[k] = {company:c.company, division:c.division||'', dept:c.dept||'', purTeam:c.purTeam||'', contact:c.contact||'', email:c.email||'', note:'Dept Master', createdAt:new Date(t0 + ri).toISOString()}; }   // 시트 행 순서대로 코드(A, B…)가 붙도록
     else if (normS(ex.email)!==normS(c.email) || normS(ex.contact)!==normS(c.contact)) diffs.push(t('imp.ctDiff', [c.company,c.division,c.dept].filter(Boolean).join(' / '), `${c.contact} <${c.email}>`, `${ex.contact} <${ex.email}>`));
   });
   const n = Object.keys(add).length;
@@ -1757,18 +1821,19 @@ function resolveBillCol(v, dmRows){
   const nv = normS(v); if (!nv) return '';
   const row = (dmRows||[]).find(c => normS(c.key)===nv || normS([c.company,c.division,c.dept].filter(Boolean).join(' / '))===nv);
   if (row) return ctKey(row);
-  const hit = Object.entries(contacts).find(([,c]) => c && (normS([c.company,c.division,c.dept].filter(Boolean).join(' / '))===nv || normS(c.email)===nv || normS(c.purTeam)===nv));
+  const hit = Object.entries(contacts).find(([,c]) => c && (normS(c.code)===nv || normS([c.company,c.division,c.dept].filter(Boolean).join(' / '))===nv || normS(c.email)===nv || normS(c.purTeam)===nv));
   return hit ? hit[0] : null;
 }
 
 /* ═════ 화면 ═════ */
 window.setBlView = v => { blView = v; renderBilling(); };
-function blDefaultPeriod(kind){
+window.blCut = kind => {
   const y=today.getFullYear(), m=today.getMonth();
-  const a = kind==='last' ? new Date(y,m-1,1) : new Date(y,m,1), b = kind==='last' ? new Date(y,m,0) : new Date(y,m+1,0);
-  $('blFrom').value = ymd(a); $('blTo').value = ymd(b); renderBilling();
-}
-window.blPeriod = blDefaultPeriod;
+  $('blTo').value = kind==='lastEnd' ? ymd(new Date(y,m,0)) : kind==='thisEnd' ? ymd(new Date(y,m+1,0)) : TODAY; renderBilling();
+};
+window.blClearFrom = () => { $('blFrom').value=''; renderBilling(); };
+let blCode = '';
+window.setBlCode = c => { blCode = blCode===c ? '' : c; renderCand(); };
 
 function renderBilling(){
   document.querySelectorAll('#blSeg button').forEach(b=>b.classList.toggle('on', b.dataset.v===blView));
@@ -1780,66 +1845,100 @@ function renderBilling(){
 }
 
 function basisDate(r, b){ return b==='received' ? (r.receivedDate||'') : b==='due' ? (r.dueDate||'') : (r.completedDate||''); }
+/* 미청구 샘플은 날짜와 상관없이 전부 모은 뒤 분류 — 기간 필터로 '사라지는' 샘플이 없게 */
 function collectCandidates(){
   const from=$('blFrom').value, to=$('blTo').value, b=$('blBasis').value, fc=$('blCo').value, showB=$('blShowBilled').checked;
   const rows = [];
   reqEntries().forEach(([id,r]) => {
-    const d = basisDate(r, b); if (!d || (from && d<from) || (to && d>to)) return;
     if (fc && r.company!==fc) return;
+    const d = basisDate(r, b), sent = isDone(r);
     (r.samples||[]).forEach((s,i) => {
       if (!s) return;
       const inv = lockOf(id, s);
-      if (inv && !showB) return;
-      const bill = billOf(r, s), lines = s.uid ? sampleLines(r, s, id) : [];
-      let st = 'ok';
-      if (inv) st='locked'; else if (!s.uid) st='notSent'; else if (!isDone(r)) st='notSent'; else if (bill.missing || !String(bill.email||'').trim()) st='noContact';
-      rows.push({id, r, s, i, inv, bill, lines, st, noPrice: lines.some(l=>l.noPrice), amt: linesAmt(lines), date: d});
+      if (inv && (!showB || (to && d && d>to) || (from && d && d<from))) return;
+      const bill = billOf(r, s), noCt = !!bill.missing || !String(bill.email||'').trim();
+      const lines = s.uid ? sampleLines(r, s, id) : [];
+      let st;
+      if (inv) st = 'locked';
+      else if (!sent || !s.uid) st = 'open';
+      else if (noCt) st = 'noContact';
+      else if (d && to && d>to) st = 'after';
+      else if (d && from && d<from) st = 'before';
+      else st = 'ok';
+      rows.push({id, r, s, i, inv, bill, lines, st, noCt, code: noCt ? '' : (bill.code||''),
+        noTeam: !noCt && !String(bill.purTeam||'').trim(), noDate: !d, noPrice: lines.some(l=>l.noPrice), amt: linesAmt(lines), date: d,
+        age: sent && r.completedDate ? -diffDays(r.completedDate) : null});
     });
   });
   return rows;
 }
-function groupKeyOf(x){
-  if (x.st==='noContact') return '~nocontact';
-  return [normS(x.bill.email), normS(x.bill.company||x.r.company), bset.byPo ? normS(x.r.po) : ''].join('|');
-}
+function groupKeyOf(x){ return [normS(x.bill.email), normS(x.bill.company||x.r.company), bset.byPo ? normS(x.r.po) : ''].join('|'); }
+const sortRows = xs => xs.sort((a,b)=>String(a.r.reqNo).localeCompare(String(b.r.reqNo)) || a.i-b.i);
 function renderCand(){
   const rows = collectCandidates();
+  const billable = rows.filter(x=>x.st==='ok' || x.st==='locked'), noCtRows = rows.filter(x=>x.noCt && !x.inv), openRows = rows.filter(x=>x.st==='open' && !x.noCt);
+  // 코드 버튼 (청구 가능 + 진행 중 건 기준)
+  const codeCnt = {}; [...rows.filter(x=>x.st==='ok'), ...openRows].forEach(x=>{ if (x.code) codeCnt[x.code]=(codeCnt[x.code]||0)+1; });
+  const codes = Object.keys(codeCnt).sort(codeSort);
+  if (blCode && blCode!=='?' && !codes.includes(blCode)) blCode = '';
+  const ctOf = c => Object.values(contacts).find(x=>x && x.code===c);
+  $('blCodes').innerHTML = `<button class="cbtn${!blCode?' on':''}" onclick="setBlCode('')" style="padding-left:10px">${t('bl.codeAll')}</button>` +
+    codes.map(c => { const k=ctOf(c); return `<button class="cbtn${blCode===c?' on':''}" onclick="setBlCode('${c}')" title="${escH(k?ctLabelFull(k):'')}">${codeBadge(c)}${escH(k?.purTeam||k?.company||'')} <span class="cnt">${codeCnt[c]}</span></button>`; }).join('') +
+    (noCtRows.length ? `<button class="cbtn${blCode==='?'?' on':''}" onclick="setBlCode('?')"><span class="pill warn" style="padding:1px 6px">?</span>${t('bl.codeNone')} <span class="cnt">${noCtRows.length}</span></button>` : '');
+  const pass = x => !blCode || (blCode==='?' ? x.noCt : x.code===blCode);
+
   const g = new Map();
-  rows.forEach(x => { const k=groupKeyOf(x); if (!g.has(k)) g.set(k, []); g.get(k).push(x); });
-  blGroups = [...g.entries()].sort((a,b)=> a[0]==='~nocontact' ? -1 : b[0]==='~nocontact' ? 1 : a[0].localeCompare(b[0]))
-    .map(([k,xs]) => ({k, xs: xs.sort((a,b)=>String(a.r.reqNo).localeCompare(String(b.r.reqNo)) || a.i-b.i)}));
-  const ok = rows.filter(x=>x.st==='ok'), inc = ok.filter(x=>!blExcl.has(x.lines[0]?.lk||''));
-  const grpN = new Set(inc.map(groupKeyOf)).size;
-  const chip = (l,v,c) => `<div class="stat-chip"${c?` style="border-color:${c}"`:''}><span style="color:var(--text3);font-size:11px">${l}</span><span class="stat-val">${v}</span></div>`;
-  $('blStats').innerHTML = chip(t('bl.sum.smp'), inc.length) + chip(t('bl.sum.grp'), grpN) + chip(t('bl.sum.amt'), money(inc.reduce((a,x)=>a+x.amt,0))) +
-    (rows.some(x=>x.st==='noContact') ? chip(t('bl.sum.noCt'), rows.filter(x=>x.st==='noContact').length, '#f59e0b') : '') +
+  billable.filter(pass).forEach(x => { const k=groupKeyOf(x); if (!g.has(k)) g.set(k, []); g.get(k).push(x); });
+  blGroups = [...g.entries()].map(([k,xs]) => ({k, code: (xs.find(x=>x.code)||{}).code||'', xs: sortRows(xs)}))
+    .sort((a,b)=> codeSort(a.code||'ZZZ', b.code||'ZZZ') || a.k.localeCompare(b.k));
+
+  const ok = rows.filter(x=>x.st==='ok'), inc = ok.filter(x=>pass(x) && !blExcl.has(x.lines[0]?.lk||''));
+  const chip = (l,v,c,click) => `<div class="stat-chip${click?' clk':''}"${c?` style="border-color:${c}"`:''}${click?` onclick="${click}"`:''}><span style="color:var(--text3);font-size:11px">${l}</span><span class="stat-val">${v}</span></div>`;
+  const nTeam = rows.filter(x=>x.noTeam && !x.inv).length, nDate = ok.filter(x=>x.noDate).length, nOld = ok.filter(x=>(x.age??0)>=30).length;
+  const nAfter = rows.filter(x=>x.st==='after').length, nBefore = rows.filter(x=>x.st==='before').length;
+  $('blStats').innerHTML = chip(t('bl.sum.smp'), inc.length) + chip(t('bl.sum.grp'), new Set(inc.map(groupKeyOf)).size) + chip(t('bl.sum.amt'), money(inc.reduce((a,x)=>a+x.amt,0))) +
+    (noCtRows.length ? chip(t('bl.sum.noCt'), noCtRows.length, '#f59e0b', "setBlCode('?')") : '') +
+    (nTeam ? chip(t('bl.sum.noTeam'), nTeam, '#f59e0b') : '') + (nDate ? chip(t('bl.sum.noDate'), nDate, '#f59e0b') : '') +
     (ok.some(x=>x.noPrice) ? chip(t('bl.sum.noPrice'), ok.filter(x=>x.noPrice).length, '#f59e0b') : '') +
-    (rows.some(x=>x.st==='notSent') ? chip(t('bl.sum.notSent'), rows.filter(x=>x.st==='notSent').length) : '');
-  if (!blGroups.length){ $('blGroups').innerHTML = `<div class="panel"><div class="empty"><div class="empty-icon">📭</div>${t('bl.empty')}</div></div>`; return; }
+    (nOld ? chip(t('bl.sum.old'), nOld, '#dc2626') : '') + (openRows.length ? chip(t('bl.sum.open'), openRows.length) : '') +
+    (nAfter ? chip(t('bl.sum.after'), nAfter) : '') + (nBefore ? chip(t('bl.sum.before'), nBefore, '#dc2626', 'blClearFrom()') : '');
+
   const stPill = x => {
-    if (x.st==='locked') return `<span class="pill lock">🔒 ${escH(x.inv)}</span>`;
-    if (x.st==='notSent') return `<span class="pill grey">${t('bl.st.notSent')}</span>`;
-    if (x.st==='noContact') return `<span class="pill warn">${t('bl.st.noContact')}</span>`;
-    return x.noPrice ? `<span class="pill warn">${t('bl.st.noPrice')}</span>` : `<span class="pill ok">${t('bl.st.ok')}</span>`;
+    const p = [];
+    if (x.st==='locked') p.push(`<span class="pill lock">🔒 ${escH(x.inv)}</span>`);
+    else if (x.st==='open') p.push(`<span class="pill grey">${escH(stName(x.r.stage))}</span>`);
+    else if (x.noCt) p.push(`<span class="pill warn">${t('bl.st.noContact')}</span>`);
+    else if (x.st==='ok') p.push(x.noPrice ? `<span class="pill warn">${t('bl.st.noPrice')}</span>` : `<span class="pill ok">${t('bl.st.ok')}</span>`);
+    if (!x.inv && x.noTeam) p.push(`<span class="pill warn">${t('bl.st.noTeam')}</span>`);
+    if (x.st==='ok' && x.noDate) p.push(`<span class="pill warn">${t('bl.st.noDate')}</span>`);
+    if (!x.inv && (x.age??0)>=30) p.push(`<span class="pill ${x.age>=60?'red':'warn'}">${t('bl.ageD', x.age)}</span>`);
+    return p.join(' ');
   };
-  $('blGroups').innerHTML = blGroups.map((G, gi) => {
-    const noCt = G.k==='~nocontact', h = G.xs.find(x=>x.st!=='locked') || G.xs[0], b = h.bill;
+  const billCell = x => x.st==='locked' ? `${codeBadge(x.code)}${escH(ctLabel(x.bill))}`
+    : `<div style="display:flex;align-items:center">${x.noCt?'<span class="pill warn" style="padding:1px 6px;margin-right:4px">?</span>':codeBadge(x.code)}<select class="sel bill-sel${x.noCt?' warn':''}" onchange="setSampleBill('${x.id}',${x.i},this.value)">${contactOptions(x.r.company, x.s.billKey||'', reqDefaultLabel(x.r))}</select></div>`;
+  const table = (xs, withInc) => `<div class="tbl-wrap" style="box-shadow:none"><table class="tbl mini"><thead><tr>
+      ${withInc?`<th>${t('bl.h.inc')}</th>`:''}<th>${t('f.reqNo')}</th><th>${t('s.id')}</th><th>${t('s.mat')}</th><th>${t('s.lot')}</th><th>${t('s.items')}</th><th>${t('bl.h.rec')}</th><th>${t('bl.h.sent')}</th><th style="min-width:250px">${t('bl.h.bill')}</th><th>${t('bl.h.status')}</th><th class="num">${t('bl.h.amt')}</th></tr></thead><tbody>
+      ${xs.map(x => { const lk=x.lines[0]?.lk||'';
+        return `<tr${x.st==='locked'?' class="lockedrow"':''}>${withInc?`<td>${x.st==='ok'?`<input type="checkbox" ${blExcl.has(lk)?'':'checked'} onchange="blToggle('${escH(lk)}',this.checked)">`:''}</td>`:''}
+        <td class="mono"><a href="#" onclick="openReq('${x.id}',event);return false">${escH(x.r.reqNo||'-')}</a></td><td><b>${escH(x.s.id)}</b></td><td>${escH(x.s.mat)}</td><td class="mono">${escH(x.s.lot)}</td><td>${escH(x.s.items)}</td>
+        <td class="mono">${escH(x.r.receivedDate||'-')}</td><td class="mono">${escH(x.r.completedDate||'-')}</td>
+        <td>${billCell(x)}</td><td>${stPill(x)}</td><td class="num">${x.st==='locked'||x.st==='open'?'':money(x.amt)}</td></tr>`; }).join('')}
+      </tbody></table></div>`;
+
+  let html = '';
+  const nc = sortRows(noCtRows.filter(pass));
+  if (nc.length) html += `<div class="panel grp"><div class="grp-h warn">${t('bl.grpNoCt')}</div>${table(nc, false)}</div>`;
+  if (blGroups.length) html += `<div class="sec-title">${t('bl.secBill')}</div>` + blGroups.map((G, gi) => {
+    const h = G.xs.find(x=>x.st!=='locked') || G.xs[0], b = h.bill;
     const sel = G.xs.filter(x=>x.st==='ok' && !blExcl.has(x.lines[0].lk));
     const pos = [...new Set(G.xs.map(x=>x.r.po).filter(Boolean))];
-    const head = noCt ? `<div class="grp-h warn">${t('bl.grpNoCt')}</div>`
-      : `<div class="grp-h"><div><div class="grp-co">${escH(b.company||h.r.company||'-')} <span class="grp-team">${escH(b.purTeam||[b.division,b.dept].filter(Boolean).join(' ')||'')}</span></div>
-          <div class="grp-ct">${t('bl.attn')} <b>${escH(b.contact||'-')}</b> · <span class="mono">${escH(b.email||'')}</span> · ${t('bl.po')} ${pos.length?escH(pos.join(', ')):`<span class="muted">${t('bl.noPo')}</span>`}</div></div>
-          <button class="btn sm" ${sel.length?'':'disabled'} onclick="openDraft(${gi})">${t('bl.make', sel.length, money(sel.reduce((a,x)=>a+x.amt,0)))}</button></div>`;
-    return `<div class="panel grp">${head}<div class="tbl-wrap" style="box-shadow:none"><table class="tbl mini"><thead><tr>
-      <th>${t('bl.h.inc')}</th><th>${t('f.reqNo')}</th><th>${t('s.id')}</th><th>${t('s.mat')}</th><th>${t('s.lot')}</th><th>${t('s.items')}</th><th>${t('bl.h.sent')}</th><th style="min-width:220px">${t('bl.h.bill')}</th><th>${t('bl.h.status')}</th><th class="num">${t('bl.h.amt')}</th></tr></thead><tbody>
-      ${G.xs.map(x => { const lk=x.lines[0]?.lk||''; const can = x.st==='ok';
-        return `<tr${x.st==='locked'?' class="lockedrow"':''}><td>${can?`<input type="checkbox" ${blExcl.has(lk)?'':'checked'} onchange="blToggle('${escH(lk)}',this.checked)">`:''}</td>
-        <td class="mono"><a href="#" onclick="openReq('${x.id}',event);return false">${escH(x.r.reqNo||'-')}</a></td><td><b>${escH(x.s.id)}</b></td><td>${escH(x.s.mat)}</td><td class="mono">${escH(x.s.lot)}</td><td>${escH(x.s.items)}</td>
-        <td class="mono">${escH(x.r.completedDate||'-')}</td>
-        <td>${x.st==='locked' ? escH(ctLabel(x.bill)) : `<select class="sel bill-sel${x.st==='noContact'?' warn':''}" onchange="setSampleBill('${x.id}',${x.i},this.value)">${contactOptions(x.r.company, x.s.billKey||'', reqDefaultLabel(x.r))}</select>`}</td>
-        <td>${stPill(x)}</td><td class="num">${x.st==='locked'?'':money(x.amt)}</td></tr>`; }).join('')}
-      </tbody></table></div></div>`;
+    return `<div class="panel grp"><div class="grp-h"><div style="display:flex;align-items:center">${codeBadge(G.code, true)}<div><div class="grp-co">${escH(b.company||h.r.company||'-')} <span class="grp-team">${b.purTeam?escH(b.purTeam):`<span class="pill warn">${t('bl.st.noTeam')}</span>`}</span></div>
+          <div class="grp-ct">${t('bl.attn')} <b>${escH(b.contact||'-')}</b> · <span class="mono">${escH(b.email||'')}</span> · ${t('bl.po')} ${pos.length?escH(pos.join(', ')):`<span class="muted">${t('bl.noPo')}</span>`}</div></div></div>
+          <button class="btn sm" ${sel.length?'':'disabled'} onclick="openDraft(${gi})">${t('bl.make', sel.length, money(sel.reduce((a,x)=>a+x.amt,0)))}</button></div>${table(G.xs, true)}</div>`;
   }).join('');
+  const op = sortRows(openRows.filter(pass));
+  if (op.length) html += `<details class="open-sec panel grp"${blCode||!blGroups.length?' open':''}><summary class="sec-title" style="margin:0">${t('bl.secOpen', op.length)}</summary><div style="margin-top:10px">${table(op, false)}</div></details>`;
+  $('blGroups').innerHTML = html || `<div class="panel"><div class="empty"><div class="empty-icon">📭</div>${t('bl.empty')}</div></div>`;
 }
 window.blToggle = (lk, on) => { if (on) blExcl.delete(lk); else blExcl.add(lk); renderCand(); };
 window.setSampleBill = async (reqId, i, key) => {
@@ -1862,9 +1961,9 @@ window.openDraft = gi => {
     if (isUrgent(r) && +bset.urgentPct>0) lines.push({desc:`Urgent surcharge ${+bset.urgentPct}% — ${r.reqNo||''}`, qty:1, unit:'lot', price:r2(linesAmt(ls)*(+bset.urgentPct)/100), reqId:arr[0].id, reqNo:r.reqNo||''});
   });
   const pos = [...new Set(xs.map(x=>x.r.po).filter(Boolean))];
-  draft = { billTo:{company:b.company||xs[0].r.company||'', division:b.division||'', dept:b.dept||'', purTeam:b.purTeam||'', contact:b.contact||'', email:b.email||'', key:b.key||''},
+  draft = { billTo:{company:b.company||xs[0].r.company||'', division:b.division||'', dept:b.dept||'', purTeam:b.purTeam||'', contact:b.contact||'', email:b.email||'', key:b.key||'', code:b.code||''},
     po: pos.join(', '), date: TODAY, terms: +bset.terms||30, notes:'', lines, showDetail:true, samples: xs.map(x=>sampleDetail(x.r, x.s)),
-    period:{from:$('blFrom').value, to:$('blTo').value, basis:$('blBasis').value}, reqNos:[...new Set(xs.map(x=>x.r.reqNo).filter(Boolean))] };
+    period:{from:$('blFrom').value || xs.map(x=>x.date).filter(Boolean).sort()[0] || '', to:$('blTo').value || TODAY, basis:$('blBasis').value}, reqNos:[...new Set(xs.map(x=>x.r.reqNo).filter(Boolean))] };
   renderDraft(); $('invOverlay').classList.add('show');
 };
 function smpDetailTable(rows, cls){
@@ -1876,7 +1975,7 @@ const dueOf = (d, n) => ymd(addDays(parseD(d), +n||0));
 function renderDraft(){
   if (!draft) return;
   const d = draft, bn = {sent:t('bl.bSent'), received:t('bl.bRec'), due:t('bl.bDue')}[d.period.basis];
-  $('invTitle').textContent = t('iv.preview');
+  $('invTitle').innerHTML = codeBadge(d.billTo.code) + escH(t('iv.preview'));
   $('invSub').textContent = t('iv.periodTxt', d.period.from||'-', d.period.to||'-', bn) + (d.reqNos.length?` · ${d.reqNos.join(', ')}`:'');
   const inp = (path, v, ty='text', extra='') => `<input class="inp" type="${ty}" value="${escH(v)}" oninput="dSet('${path}',this.value)"${extra}>`;
   $('invBody').innerHTML = `
@@ -1972,11 +2071,13 @@ const istBadge = s => `<span class="badge" style="--cc:${IST[s]?.[0]||'#64748b'}
 function renderInvList(){
   const q = $('ilText').value.trim().toLowerCase(), fs = $('ilStatus').value;
   const all = Object.values(invoices).filter(Boolean).sort((a,b)=>String(b.no).localeCompare(String(a.no)));
-  const rows = all.filter(v => (!fs || v.status===fs) && (!q || [v.no, v.billTo?.company, v.billTo?.purTeam, v.billTo?.contact, v.billTo?.email, v.po, ...(v.reqNos||[])].join(' ').toLowerCase().includes(q)));
+  const fcd = $('ilCode').value, cds = [...new Set(all.map(invCode).filter(Boolean))].sort(codeSort);
+  $('ilCode').innerHTML = `<option value="">${t('bl.allCodes')}</option>` + cds.map(c=>`<option${c===fcd?' selected':''}>${escH(c)}</option>`).join('');
+  const rows = all.filter(v => (!fs || v.status===fs) && (!fcd || invCode(v)===fcd) && (!q || [v.no, invCode(v), v.billTo?.company, v.billTo?.purTeam, v.billTo?.contact, v.billTo?.email, v.po, ...(v.reqNos||[])].join(' ').toLowerCase().includes(q)));
   const sum = s => all.filter(v=>v.status===s).reduce((a,v)=>a+(+v.total||0),0);
   $('ilStats').innerHTML = [[t('il.sumOpen'), money(sum('issued'))], [t('il.sumPaid'), money(sum('paid'))]].map(([l,v])=>`<div class="stat-chip"><span style="color:var(--text3);font-size:11px">${l}</span><span class="stat-val">${v}</span></div>`).join('');
   $('ilBody').innerHTML = rows.length ? rows.map(v => `<tr${v.status==='void'?' class="voidrow"':''}>
-    <td class="mono"><b>${escH(v.no)}</b></td><td class="mono">${escH(v.date)}</td>
+    <td class="mono"><b>${escH(v.no)}</b></td><td class="mono">${escH(v.date)}</td><td>${codeBadge(invCode(v))}</td>
     <td>${escH(v.billTo?.company||'')} · ${escH(v.billTo?.purTeam||'')}<div class="note">${escH(v.billTo?.contact||'')} &lt;${escH(v.billTo?.email||'')}&gt;</div></td>
     <td>${escH(v.po||'')}</td><td class="mono" style="font-size:11px">${escH(v.period?.from||'')}~${escH(v.period?.to||'')}</td>
     <td class="num">${v.sampleCount||0}</td><td class="num">${money(v.total)}</td><td>${istBadge(v.status)}${v.status==='void'&&v.voidReason?`<div class="note">${escH(v.voidReason)}</div>`:''}</td>
@@ -1985,7 +2086,7 @@ function renderInvList(){
       ${v.status!=='void'?`<button class="btn ghost sm" onclick="mailInv('${escH(v.no)}')">${t('il.mail')}</button>
       <button class="btn ghost sm" onclick="paidInv('${escH(v.no)}')">${v.status==='paid'?t('il.unpaid'):t('il.paid')}</button>
       <button class="btn danger sm" onclick="voidInv('${escH(v.no)}')">${t('il.void')}</button>`:''}</td></tr>`).join('')
-    : `<tr><td colspan="9"><div class="empty"><div class="empty-icon">🧾</div>${t('il.empty')}</div></td></tr>`;
+    : `<tr><td colspan="10"><div class="empty"><div class="empty-icon">🧾</div>${t('il.empty')}</div></td></tr>`;
 }
 window.renderInvList = renderInvList;
 window.paidInv = async no => {
@@ -2083,8 +2184,8 @@ function ctUsage(){
 }
 function renderContacts(){
   const use = ctUsage();
-  const rows = Object.entries(contacts).filter(([,c])=>c).sort((a,b)=>ctLabelFull(a[1]).localeCompare(ctLabelFull(b[1])));
-  const rowHtml = (id, c) => `<tr data-id="${escH(id)}">${['company','division','dept','purTeam','contact','email','note'].map(k=>`<td><input class="cell" data-k="${k}" value="${escH(c[k]||'')}"${k==='company'?' list="dlCompany"':''}${k==='email'?' type="email" style="min-width:190px"':''}></td>`).join('')}
+  const rows = Object.entries(contacts).filter(([,c])=>c).sort((a,b)=>codeSort(a[1].code||'ZZZ', b[1].code||'ZZZ') || ctLabelFull(a[1]).localeCompare(ctLabelFull(b[1])));
+  const rowHtml = (id, c) => `<tr data-id="${escH(id)}"><td style="white-space:nowrap">${codeBadge(c.code)}<input class="cell mono" data-k="code" value="${escH(c.code||'')}" maxlength="3" style="width:52px;min-width:52px;text-transform:uppercase" placeholder="auto"></td>${['company','division','dept','purTeam','contact','email','note'].map(k=>`<td><input class="cell" data-k="${k}" value="${escH(c[k]||'')}"${k==='company'?' list="dlCompany"':''}${k==='email'?' type="email" style="min-width:190px"':''}></td>`).join('')}
     <td class="num">${id?(use[id]||0):''}</td>
     <td style="white-space:nowrap"><button class="btn sm" onclick="saveContact(this)">${t('btn.save')}</button>${id?` <button class="btn danger sm" onclick="delContact('${escH(id)}')">${t('btn.del')}</button>`:''}</td></tr>`;
   $('ctBody').innerHTML = rows.map(([id,c])=>rowHtml(id,c)).join('') + rowHtml('', {});
@@ -2092,6 +2193,10 @@ function renderContacts(){
 window.saveContact = async btn => {
   const tr = btn.closest('tr'), v = rowVals(tr), id = tr.dataset.id;
   if (!v.company || !v.email){ showToast(t('t.ctNeed'), true); return; }
+  v.code = String(v.code||'').toUpperCase();
+  if (v.code && !/^[A-Z]{1,3}$/.test(v.code)){ showToast(t('t.ctCode'), true); return; }
+  if (v.code && Object.entries(contacts).some(([k2,c2]) => k2!==id && c2 && c2.code===v.code)){ showToast(t('t.ctCodeDup', v.code), true); return; }
+  if (!id) v.createdAt = new Date().toISOString();
   const k = ctKey(v);
   if (k!==id && contacts[k]){ showToast(t('t.ctDup'), true); return; }
   const c = {...v, updatedAt:new Date().toISOString()};
@@ -2132,7 +2237,7 @@ window.saveBset = () => guard(()=>set(bsRef, {
 }), t('t.bsSaved'));
 
 /* 기간 기본값: 이번 달 */
-(() => { const y=today.getFullYear(), m=today.getMonth(); $('blFrom').value=ymd(new Date(y,m,1)); $('blTo').value=ymd(new Date(y,m+1,0)); })();
+$('blFrom').value = ''; $('blTo').value = TODAY;
 /*BILLING_END*/
 
 
